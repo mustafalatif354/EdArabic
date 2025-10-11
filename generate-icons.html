@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate EdArabic Icons</title>
+</head>
+<body>
+    <h1>EdArabic Icon Generator</h1>
+    <p>Click the button below to generate placeholder icons for your PWA:</p>
+    <button onclick="generateIcons()">Generate Icons</button>
+    <div id="output"></div>
+
+    <script>
+        function generateIcons() {
+            const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+            const output = document.getElementById('output');
+            output.innerHTML = '<p>Generating icons...</p>';
+            
+            sizes.forEach(size => {
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+                
+                // Background gradient (emerald green)
+                const gradient = ctx.createLinearGradient(0, 0, size, size);
+                gradient.addColorStop(0, '#10b981');
+                gradient.addColorStop(1, '#059669');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, size, size);
+                
+                // Add Arabic letter Alif (ا) in white
+                ctx.fillStyle = '#ffffff';
+                ctx.font = `bold ${size * 0.6}px serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('ا', size / 2, size / 2);
+                
+                // Add "Ed" text in small size
+                ctx.fillStyle = '#ffffff';
+                ctx.font = `bold ${size * 0.15}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.fillText('Ed', size / 2, size * 0.85);
+                
+                // Download link
+                const link = document.createElement('a');
+                link.download = `icon-${size}x${size}.png`;
+                link.href = canvas.toDataURL();
+                link.textContent = `Download icon-${size}x${size}.png`;
+                link.style.display = 'block';
+                link.style.margin = '10px';
+                output.appendChild(link);
+            });
+            
+            output.innerHTML += '<p style="color: green; font-weight: bold;">✓ Icons generated! Click the links above to download each icon.</p>';
+            output.innerHTML += '<p><strong>Note:</strong> Save all icons to the <code>public</code> folder of your project.</p>';
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        button {
+            background-color: #10b981;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #059669;
+        }
+        code {
+            background-color: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+    </style>
+</body>
+</html>
