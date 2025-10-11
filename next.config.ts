@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+// @ts-ignore
 import withPWA from 'next-pwa';
 
 const nextConfig: NextConfig = {
@@ -123,7 +124,7 @@ export default withPWA({
       }
     },
     {
-      urlPattern: ({ url }) => {
+      urlPattern: ({ url }: { url: URL }) => {
         const isSameOrigin = self.origin === url.origin;
         if (!isSameOrigin) return false;
         const pathname = url.pathname;
