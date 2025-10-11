@@ -8,7 +8,7 @@ const supabase = createClient(supabaseUrl, supabaseKey)
 // GET /api/progress/[lessonId] - Get specific lesson progress
 export async function GET(
   request: NextRequest,
-  { params }: { params: { lessonId: string } }
+  { params }: { params: Promise<{ lessonId: string }> }
 ) {
   try {
     const authHeader = request.headers.get('authorization')
@@ -23,7 +23,8 @@ export async function GET(
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     }
 
-    const lessonId = parseInt(params.lessonId)
+    const { lessonId: lessonIdParam } = await params
+    const lessonId = parseInt(lessonIdParam)
     if (isNaN(lessonId)) {
       return NextResponse.json({ error: 'Invalid lesson ID' }, { status: 400 })
     }
@@ -53,7 +54,7 @@ export async function GET(
 // PUT /api/progress/[lessonId] - Update specific lesson progress
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { lessonId: string } }
+  { params }: { params: Promise<{ lessonId: string }> }
 ) {
   try {
     const authHeader = request.headers.get('authorization')
@@ -68,7 +69,8 @@ export async function PUT(
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     }
 
-    const lessonId = parseInt(params.lessonId)
+    const { lessonId: lessonIdParam } = await params
+    const lessonId = parseInt(lessonIdParam)
     if (isNaN(lessonId)) {
       return NextResponse.json({ error: 'Invalid lesson ID' }, { status: 400 })
     }
