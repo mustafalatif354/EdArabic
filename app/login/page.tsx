@@ -40,7 +40,7 @@ export default function LoginPage() {
       } else {
         router.push("/home") // Redirect to homepage after successful login
       }
-    } catch (error) {
+    } catch {
       setMessage("Er is een fout opgetreden tijdens het inloggen")
     } finally {
       setLoading(false)
@@ -89,7 +89,7 @@ export default function LoginPage() {
           setMessage("")
         }, 3000)
       }
-    } catch (error) {
+    } catch {
       setMessage("Er is een fout opgetreden tijdens de registratie")
     } finally {
       setLoading(false)

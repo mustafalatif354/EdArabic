@@ -132,7 +132,7 @@ export default function TestPage() {
     }
 
     checkAuth()
-  }, [router])
+  }, [router, generateExercise])
 
   const generateExercise = () => {
     if (!lesson) return []
@@ -159,7 +159,7 @@ export default function TestPage() {
       }
     } else {
       // For regular lessons, create 4 exercises: 2 listen and click, 2 see and click
-      lesson.letters.forEach((letter, index) => {
+      lesson.letters.forEach((letter) => {
         exercises.push({
           type: 'listen',
           correctLetter: letter,

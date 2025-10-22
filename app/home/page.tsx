@@ -25,64 +25,6 @@ export default function HomePage() {
     return progress ? { completed: progress.completed, progress: progress.completed ? 100 : 0 } : { completed: false, progress: 0 }
   }
 
-  const lessons = [
-    {
-      id: 1,
-      title: "Les 1: Arabisch Alfabet - Basis",
-      description: "Leer de eerste vier letters van het Arabische alfabet",
-      letters: ["ا", "ب", "ت", "ث"],
-      ...getLessonProgress(1)
-    },
-    {
-      id: 2,
-      title: "Les 2: Meer Letters",
-      description: "Uitbreiding van het Arabische alfabet",
-      letters: ["ج", "ح", "خ", "د"],
-      ...getLessonProgress(2)
-    },
-    {
-      id: 3,
-      title: "Les 3: Geavanceerde Letters",
-      description: "Complexere Arabische letters leren",
-      letters: ["ذ", "ر", "ز", "س"],
-      ...getLessonProgress(3)
-    },
-    {
-      id: 4,
-      title: "Les 4: Nieuwe Vormen",
-      description: "Leer meer Arabische lettervormen",
-      letters: ["ش", "ص", "ض", "ط"],
-      ...getLessonProgress(4)
-    },
-    {
-      id: 5,
-      title: "Les 5: Uitbreiding",
-      description: "Meer letters van het Arabische alfabet",
-      letters: ["ظ", "ع", "غ", "ف"],
-      ...getLessonProgress(5)
-    },
-    {
-      id: 6,
-      title: "Les 6: Verder Leren",
-      description: "Nog meer Arabische letters",
-      letters: ["ق", "ك", "ل", "م"],
-      ...getLessonProgress(6)
-    },
-    {
-      id: 7,
-      title: "Les 7: Bijna Klaar",
-      description: "De laatste letters van het alfabet",
-      letters: ["ن", "ه", "و", "ي"],
-      ...getLessonProgress(7)
-    },
-    {
-      id: 8,
-      title: "Les 8: Complete Alfabet",
-      description: "Alle 28 letters van het Arabische alfabet",
-      letters: [],
-      ...getLessonProgress(8)
-    }
-  ]
 
   useEffect(() => {
     async function checkAuth() {
@@ -121,12 +63,6 @@ export default function HomePage() {
     router.push("/login")
   }
 
-  const navigateToLesson = (lessonId: number) => {
-    const isUnlocked = ProgressManager.isLessonUnlocked(lessonId, userProgress)
-    if (isUnlocked) {
-      router.push(`/lessons/${lessonId}`)
-    }
-  }
 
   if (loading) {
     return (
