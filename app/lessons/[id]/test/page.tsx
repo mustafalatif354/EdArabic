@@ -118,22 +118,6 @@ export default function TestPage() {
   const lessonId = parseInt(params.id as string)
   const lesson = lessonsData[lessonId as keyof typeof lessonsData]
 
-  useEffect(() => {
-    async function checkAuth() {
-      const { data } = await supabase.auth.getUser()
-      if (!data.user) {
-        router.push("/login")
-      } else {
-        setUser(data.user)
-        const generatedExercises = generateExercise()
-        setExercises(generatedExercises)
-        setLoading(false)
-      }
-    }
-
-    checkAuth()
-  }, [router, generateExercise])
-
   const generateExercise = () => {
     if (!lesson) return []
     
@@ -175,8 +159,25 @@ export default function TestPage() {
       })
     }
     
-    return exercises.sort(() => Math.random() - 0.5).slice(0, lessonId === 8 ? 8 : 4)
+    return exercises.sort(() => Math.random() - 0.5)
   }
+
+  useEffect(() => {
+    async function checkAuth() {
+      const { data } = await supabase.auth.getUser()
+      if (!data.user) {
+        router.push("/login")
+      } else {
+        setUser(data.user)
+        const generatedExercises = generateExercise()
+        setExercises(generatedExercises)
+        setLoading(false)
+      }
+    }
+
+    checkAuth()
+  }, [router, generateExercise])
+
 
   const currentEx = exercises[currentExercise]
 
