@@ -6,6 +6,13 @@ const nextConfig: NextConfig = {
   /* config options here */
   turbopack: {
     // Turbopack configuration
+  },
+  eslint: {
+    ignoreDuringBuilds: false,
+  },
+  // Disable specific ESLint rules
+  typescript: {
+    ignoreBuildErrors: false,
   }
 };
 
