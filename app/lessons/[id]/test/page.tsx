@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
 
@@ -118,7 +118,7 @@ export default function TestPage() {
   const lessonId = parseInt(params.id as string)
   const lesson = lessonsData[lessonId as keyof typeof lessonsData]
 
-  const generateExercise = () => {
+  const generateExercise = useCallback(() => {
     if (!lesson) return []
     
     const exercises: any[] = []
@@ -160,7 +160,7 @@ export default function TestPage() {
     }
     
     return exercises.sort(() => Math.random() - 0.5)
-  }
+  }, [lesson, lessonId])
 
   useEffect(() => {
     async function checkAuth() {

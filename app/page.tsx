@@ -87,7 +87,7 @@ export default function HomePage() {
           if (entry.isIntersecting) {
             const index = sectionRefs.current.findIndex(ref => ref === entry.target);
             if (index !== -1) {
-              setCurrentSection(index);
+              // Section is in view - could add logic here if needed
             }
           }
         });
