@@ -143,17 +143,30 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">EdArabic</h1>
+              <h1 
+                className="text-3xl font-bold text-gray-900 cursor-pointer hover:text-emerald-600 transition-colors"
+                onClick={() => router.push('/')}
+              >
+                EdArabic
+              </h1>
               <p className="text-gray-600">
                 Welkom terug, {userProfile?.username || user?.email}
               </p>
             </div>
-            <button
-              onClick={handleLogout}
-              className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
-            >
-              Uitloggen
-            </button>
+            <div className="flex space-x-4">
+              <button
+                onClick={() => router.push('/')}
+                className="bg-emerald-500 text-white px-4 py-2 rounded-lg hover:bg-emerald-600 transition-colors"
+              >
+                Homepage
+              </button>
+              <button
+                onClick={handleLogout}
+                className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
+              >
+                Uitloggen
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -199,98 +212,78 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Lessons Grid */}
+        {/* Exercise Categories */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-6">Beschikbare Lessen</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {lessons.map((lesson) => {
-              const isUnlocked = ProgressManager.isLessonUnlocked(lesson.id, userProgress)
-              const isCompleted = lesson.completed
-              
-              return (
-                <div
-                  key={lesson.id}
-                  className={`bg-white rounded-2xl shadow-lg p-6 transition-all ${
-                    isUnlocked 
-                      ? 'hover:shadow-xl cursor-pointer' 
-                      : 'opacity-60 cursor-not-allowed'
-                  }`}
-                  onClick={() => navigateToLesson(lesson.id)}
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-bold text-gray-900">{lesson.title}</h3>
-                    <div className="flex items-center space-x-2">
-                      {!isUnlocked && (
-                        <div className="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center">
-                          <svg className="w-3 h-3 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                      )}
-                      <div className={`w-3 h-3 rounded-full ${
-                        isCompleted ? 'bg-green-500' : isUnlocked ? 'bg-yellow-500' : 'bg-gray-300'
-                      }`}></div>
-                    </div>
-                  </div>
-                  
-                  <p className="text-gray-600 mb-4">{lesson.description}</p>
-                  
-                  <div className="mb-4">
-                    <div className="flex space-x-2 mb-2">
-                      {lesson.letters.map((letter, index) => (
-                        <div
-                          key={index}
-                          className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl font-bold ${
-                            isCompleted ? 'bg-green-100 text-green-800' : 'bg-emerald-100 text-gray-800'
-                          }`}
-                        >
-                          {letter}
-                        </div>
-                      ))}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {lesson.letters.length} letters
-                    </div>
-                  </div>
-
-                  {/* Progress Bar */}
-                  {isUnlocked && (
-                    <div className="mb-4">
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-sm text-gray-600">Voortgang</span>
-                        <span className="text-sm text-gray-600">{lesson.progress}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className={`h-2 rounded-full transition-all duration-300 ${
-                            isCompleted ? 'bg-green-500' : 'bg-emerald-500'
-                          }`}
-                          style={{ width: `${lesson.progress}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-500">
-                      {!isUnlocked ? 'Vergrendeld' : isCompleted ? 'Voltooid' : 'Beschikbaar'}
-                    </div>
-                    <button 
-                      className={`px-4 py-2 rounded-lg transition ${
-                        isUnlocked 
-                          ? isCompleted
-                            ? 'bg-green-500 text-white hover:bg-green-600'
-                            : 'bg-emerald-500 text-white hover:bg-emerald-600'
-                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      }`}
-                      disabled={!isUnlocked}
-                    >
-                      {!isUnlocked ? 'Vergrendeld' : isCompleted ? 'Herhaal' : 'Start Les'}
-                    </button>
-                  </div>
+          <h2 className="text-2xl font-bold mb-6">Oefeningen</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Letters leren Category */}
+            <div
+              className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all cursor-pointer border-l-4 border-emerald-500"
+              onClick={() => router.push('/exercises/letters')}
+            >
+              <div className="text-center">
+                <div className="text-4xl mb-4">📚</div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Letters leren</h3>
+                <p className="text-gray-600 text-sm mb-4">
+                  Leer het Arabische alfabet stap voor stap
+                </p>
+                <div className="text-xs text-gray-500">
+                  {progressStats.completedLessons}/{progressStats.totalLessons} lessen voltooid
                 </div>
-              )
-            })}
+              </div>
+            </div>
+
+            {/* Tajweed leren Category */}
+            <div
+              className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all cursor-pointer border-l-4 border-purple-500"
+              onClick={() => router.push('/exercises/tajweed')}
+            >
+              <div className="text-center">
+                <div className="text-4xl mb-4">🕌</div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Tajweed leren</h3>
+                <p className="text-gray-600 text-sm mb-4">
+                  Leer de regels voor correcte Quran recitatie
+                </p>
+                <div className="text-xs text-gray-500">
+                  Binnenkort beschikbaar
+                </div>
+              </div>
+            </div>
+
+            {/* Quran lezen Category */}
+            <div
+              className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all cursor-pointer border-l-4 border-blue-500"
+              onClick={() => router.push('/exercises/quran-read')}
+            >
+              <div className="text-center">
+                <div className="text-4xl mb-4">📖</div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Quran lezen</h3>
+                <p className="text-gray-600 text-sm mb-4">
+                  Oefen met het lezen van Quran verzen
+                </p>
+                <div className="text-xs text-gray-500">
+                  Binnenkort beschikbaar
+                </div>
+              </div>
+            </div>
+
+            {/* Quran luisteren Category */}
+            <div
+              className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all cursor-pointer border-l-4 border-indigo-500"
+              onClick={() => router.push('/exercises/quran-listen')}
+            >
+              <div className="text-center">
+                <div className="text-4xl mb-4">🎧</div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Quran luisteren</h3>
+                <p className="text-gray-600 text-sm mb-4">
+                  Luister en leer van mooie Quran recitatie
+                </p>
+                <div className="text-xs text-gray-500">
+                  Binnenkort beschikbaar
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
