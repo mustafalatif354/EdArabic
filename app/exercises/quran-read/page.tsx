@@ -426,12 +426,7 @@ export default function QuranReadExercisePage() {
                                        fontFamily: 'Amiri, serif',
                                        fontFeatureSettings: '"liga" 1'
                                      }}>
-                                  {verse.text} <span style={{ position: 'relative' }}>
-                                    <span style={{ position: 'absolute', top: '-0.2em', left: '0.1em', fontSize: '0.7em' }}>
-                                      {toArabicNumerals(verse.number)}
-                                    </span>
-                                    ۝
-                                  </span>
+                                  {verse.text} ﴾{toArabicNumerals(verse.number)}﴿
                                 </div>
                                 {showTranslation && verse.translation && (
                                   <div className="text-gray-600 leading-relaxed text-base italic border-l-2 border-gray-300 pl-4">
@@ -484,12 +479,7 @@ export default function QuranReadExercisePage() {
                                    fontFamily: 'Amiri, serif',
                                    fontFeatureSettings: '"liga" 1'
                                  }}>
-                              {verse.text} <span style={{ position: 'relative' }}>
-                                <span style={{ position: 'absolute', top: '-0.2em', left: '0.1em', fontSize: '0.7em' }}>
-                                  {toArabicNumerals(verse.number)}
-                                </span>
-                                ۝
-                              </span>
+                              {verse.text} ﴾{toArabicNumerals(verse.number)}﴿
                             </div>
                             {showTranslation && verse.translation && (
                               <div className="text-gray-600 leading-relaxed text-base italic border-l-2 border-gray-300 pl-4">
