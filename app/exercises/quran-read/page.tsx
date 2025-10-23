@@ -194,15 +194,15 @@ export default function QuranReadExercisePage() {
             opacity: 1;
           }
           25% { 
-            transform: perspective(1200px) rotateY(-15deg);
+            transform: perspective(1200px) rotateY(15deg);
             opacity: 0.9;
           }
           50% { 
-            transform: perspective(1200px) rotateY(-90deg);
+            transform: perspective(1200px) rotateY(90deg);
             opacity: 0.7;
           }
           75% { 
-            transform: perspective(1200px) rotateY(-165deg);
+            transform: perspective(1200px) rotateY(165deg);
             opacity: 0.9;
           }
           100% { 
@@ -389,8 +389,8 @@ export default function QuranReadExercisePage() {
                style={{ 
                  width: '1800px', 
                  height: '1200px',
-                 transform: isFlipping ? 'perspective(1000px) rotateY(-90deg)' : 'perspective(1000px) rotateY(0deg)',
-                 transformOrigin: 'left center'
+                 transform: isFlipping ? 'perspective(1000px) rotateY(90deg)' : 'perspective(1000px) rotateY(0deg)',
+                 transformOrigin: 'right center'
                }}>
             {loadingPage ? (
               <div className="flex items-center justify-center h-full">
