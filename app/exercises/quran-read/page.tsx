@@ -414,6 +414,9 @@ export default function QuranReadExercisePage() {
                           <p className="text-gray-600 text-lg">
                             {nextPageData.surahInfo.englishName}
                           </p>
+                          <div className="text-2xl text-gray-800 mt-4" style={{ fontFamily: 'Amiri, serif' }}>
+                            بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+                          </div>
                         </div>
                         
                         <div className="space-y-6">
@@ -467,6 +470,9 @@ export default function QuranReadExercisePage() {
                       <p className="text-gray-600 text-lg">
                         {currentPageData.surahInfo.englishName}
                       </p>
+                      <div className="text-2xl text-gray-800 mt-4" style={{ fontFamily: 'Amiri, serif' }}>
+                        بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+                      </div>
                     </div>
                     
                     <div className="space-y-6">
