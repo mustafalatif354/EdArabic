@@ -66,7 +66,7 @@ export default function QuranReadExercisePage() {
       if (data.code === 200 && data.data && data.data.ayahs) {
         const verses = data.data.ayahs.map((ayah: any) => ({
           number: ayah.numberInSurah,
-          text: ayah.text,
+          text: ayah.text.replace(/بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ/g, '').trim(),
           page: ayah.page
         }))
         
@@ -431,7 +431,7 @@ export default function QuranReadExercisePage() {
                                        fontFamily: 'Amiri, serif',
                                        fontFeatureSettings: '"liga" 1'
                                      }}>
-                                  {verse.text.replace(/بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ/g, '')} ﴾{toArabicNumerals(verse.number)}﴿
+                                  {verse.text} ﴾{toArabicNumerals(verse.number)}﴿
                                 </div>
                                 {showTranslation && verse.translation && (
                                   <div className="text-gray-600 leading-relaxed text-base italic border-l-2 border-gray-300 pl-4">
@@ -489,7 +489,7 @@ export default function QuranReadExercisePage() {
                                    fontFamily: 'Amiri, serif',
                                    fontFeatureSettings: '"liga" 1'
                                  }}>
-                              {verse.text.replace(/بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ/g, '')} ﴾{toArabicNumerals(verse.number)}﴿
+                              {verse.text} ﴾{toArabicNumerals(verse.number)}﴿
                             </div>
                             {showTranslation && verse.translation && (
                               <div className="text-gray-600 leading-relaxed text-base italic border-l-2 border-gray-300 pl-4">
