@@ -431,7 +431,7 @@ export default function QuranReadExercisePage() {
                                        fontFamily: 'Amiri, serif',
                                        fontFeatureSettings: '"liga" 1'
                                      }}>
-                                  {verse.text} ﴾{toArabicNumerals(verse.number)}﴿
+                                  {verse.text.replace(/بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ/g, '')} ﴾{toArabicNumerals(verse.number)}﴿
                                 </div>
                                 {showTranslation && verse.translation && (
                                   <div className="text-gray-600 leading-relaxed text-base italic border-l-2 border-gray-300 pl-4">
@@ -489,7 +489,7 @@ export default function QuranReadExercisePage() {
                                    fontFamily: 'Amiri, serif',
                                    fontFeatureSettings: '"liga" 1'
                                  }}>
-                              {verse.text} ﴾{toArabicNumerals(verse.number)}﴿
+                              {verse.text.replace(/بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ/g, '')} ﴾{toArabicNumerals(verse.number)}﴿
                             </div>
                             {showTranslation && verse.translation && (
                               <div className="text-gray-600 leading-relaxed text-base italic border-l-2 border-gray-300 pl-4">
