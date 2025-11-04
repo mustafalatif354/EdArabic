@@ -107,9 +107,24 @@ export class ProgressManager {
     }
   }
 
+  // Check if comprehensive test is completed (lesson_id 99)
+  static isComprehensiveTestCompleted(progressData: ProgressData[]): boolean {
+    const comprehensiveTest = progressData.find(p => p.lesson_id === 99)
+    return comprehensiveTest ? comprehensiveTest.completed : false
+  }
+
   // Check if a lesson is unlocked (previous lesson completed)
   static isLessonUnlocked(lessonId: number, progressData: ProgressData[]): boolean {
     if (lessonId === 1) return true // First lesson is always unlocked
+    if (lessonId === 2) {
+      // Lesson 2 requires lesson 1 to be completed
+      const lesson1 = progressData.find(p => p.lesson_id === 1)
+      return lesson1 ? lesson1.completed : false
+    }
+    if (lessonId >= 3) {
+      // Lessons 3+ require comprehensive test (lesson_id 99) to be completed
+      return this.isComprehensiveTestCompleted(progressData)
+    }
     
     const previousLesson = progressData.find(p => p.lesson_id === lessonId - 1)
     return previousLesson ? previousLesson.completed : false

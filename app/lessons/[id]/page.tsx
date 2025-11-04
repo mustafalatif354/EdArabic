@@ -3,30 +3,52 @@
 import { useEffect, useState } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
+import { ProgressManager } from "@/lib/progress"
 
 export default function LessonPage() {
   const router = useRouter()
   const params = useParams()
   const [loading, setLoading] = useState(true)
+  const [userProgress, setUserProgress] = useState<any[]>([])
   const [audio] = useState<HTMLAudioElement>(new Audio())
 
   const lessonsData = {
     1: {
-      title: "Les 1: Arabisch Alfabet - Basis",
+      title: "Les 1: Arabisch Alfabet - Eerste Helft",
       letters: [
         { symbol: 'ا', sound: '/sounds/alif.mp3', name: 'Alif', description: 'De eerste letter van het Arabische alfabet' },
         { symbol: 'ب', sound: '/sounds/ba.mp3', name: 'Ba', description: 'De tweede letter, klinkt als "b"' },
         { symbol: 'ت', sound: '/sounds/ta.mp3', name: 'Ta', description: 'De derde letter, klinkt als "t"' },
         { symbol: 'ث', sound: '/sounds/tha.mp3', name: 'Tha', description: 'Klinkt als "th" in "think"' },
-      ]
-    },
-    2: {
-      title: "Les 2: Meer Letters",
-      letters: [
         { symbol: 'ج', sound: '/sounds/jim.mp3', name: 'Jim', description: 'Klinkt als "j" in "jam"' },
         { symbol: 'ح', sound: '/sounds/ha.mp3', name: 'Ha', description: 'Diepe "h" klank' },
         { symbol: 'خ', sound: '/sounds/kha.mp3', name: 'Kha', description: 'Klinkt als "ch" in "Bach"' },
-        { symbol: 'د', sound: '/sounds/ba.mp3', name: 'Dal', description: 'Klinkt als "d"' },
+        { symbol: 'د', sound: '/sounds/dal.mp3', name: 'Dal', description: 'Klinkt als "d"' },
+        { symbol: 'ذ', sound: '/sounds/dhal.mp3', name: 'Dhal', description: 'Klinkt als "th" in "that"' },
+        { symbol: 'ر', sound: '/sounds/ra.mp3', name: 'Ra', description: 'Klinkt als "r"' },
+        { symbol: 'ز', sound: '/sounds/za.mp3', name: 'Za', description: 'Klinkt als "z"' },
+        { symbol: 'س', sound: '/sounds/sin.mp3', name: 'Sin', description: 'Klinkt als "s"' },
+        { symbol: 'ش', sound: '/sounds/shin.mp3', name: 'Shin', description: 'Klinkt als "sh" in "ship"' },
+        { symbol: 'ص', sound: '/sounds/sad.mp3', name: 'Sad', description: 'Emfatische "s" klank' },
+      ]
+    },
+    2: {
+      title: "Les 2: Arabisch Alfabet - Tweede Helft",
+      letters: [
+        { symbol: 'ض', sound: '/sounds/dad.mp3', name: 'Dad', description: 'Emfatische "d" klank' },
+        { symbol: 'ط', sound: '/sounds/ta.mp3', name: 'Ta', description: 'Emfatische "t" klank' },
+        { symbol: 'ظ', sound: '/sounds/za.mp3', name: 'Za', description: 'Emfatische "z" klank' },
+        { symbol: 'ع', sound: '/sounds/ain.mp3', name: 'Ain', description: 'Diepe keelklank' },
+        { symbol: 'غ', sound: '/sounds/ghain.mp3', name: 'Ghain', description: 'Raspende keelklank' },
+        { symbol: 'ف', sound: '/sounds/fa.mp3', name: 'Fa', description: 'Klinkt als "f"' },
+        { symbol: 'ق', sound: '/sounds/qaf.mp3', name: 'Qaf', description: 'Diepe "q" klank' },
+        { symbol: 'ك', sound: '/sounds/kaf.mp3', name: 'Kaf', description: 'Klinkt als "k"' },
+        { symbol: 'ل', sound: '/sounds/lam.mp3', name: 'Lam', description: 'Klinkt als "l"' },
+        { symbol: 'م', sound: '/sounds/mim.mp3', name: 'Mim', description: 'Klinkt als "m"' },
+        { symbol: 'ن', sound: '/sounds/nun.mp3', name: 'Nun', description: 'Klinkt als "n"' },
+        { symbol: 'ه', sound: '/sounds/ha.mp3', name: 'Ha', description: 'Klinkt als "h"' },
+        { symbol: 'و', sound: '/sounds/waw.mp3', name: 'Waw', description: 'Klinkt als "w" of "u"' },
+        { symbol: 'ي', sound: '/sounds/ya.mp3', name: 'Ya', description: 'Klinkt als "y" of "i"' },
       ]
     },
     3: {
@@ -118,12 +140,24 @@ export default function LessonPage() {
       if (!data.user) {
         router.push("/login")
       } else {
+        // Fetch user progress
+        const progress = await ProgressManager.getUserProgress()
+        setUserProgress(progress)
+        
+        // Check if lesson is unlocked
+        if (lessonId !== 1 && !ProgressManager.isLessonUnlocked(lessonId, progress)) {
+          // Redirect to home if lesson is locked
+          alert('Deze les is nog vergrendeld. Voltooi eerst de vereiste lessen.')
+          router.push("/home")
+          return
+        }
+        
         setLoading(false)
       }
     }
 
     checkAuth()
-  }, [router])
+  }, [router, lessonId])
 
   const playSound = (sound: string) => {
     audio.src = sound
@@ -237,10 +271,28 @@ export default function LessonPage() {
         {/* Test Section */}
         <div className="bg-white rounded-2xl shadow-lg p-6">
           <h2 className="text-xl font-bold mb-4">Test Je Kennis</h2>
-          <p className="text-gray-600 mb-6">
-            Nu ga je een korte test doen om te zien of je de letters goed kent. 
-            Je moet 70% of hoger scoren om de les te voltooien.
-          </p>
+          {lessonId === 2 ? (
+            <>
+              <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 mb-6">
+                <h3 className="text-lg font-bold text-blue-900 mb-2">📚 Belangrijke Comprehensieve Test</h3>
+                <p className="text-blue-800 text-sm mb-2">
+                  Na het voltooien van deze les kun je de <strong>comprehensieve test</strong> maken die alle 28 letters van het Arabische alfabet test.
+                </p>
+                <p className="text-blue-800 text-sm">
+                  Je moet minimaal <strong>80% scoren</strong> op de comprehensieve test om door te gaan naar les 3. Deze test is verplicht!
+                </p>
+              </div>
+              <p className="text-gray-600 mb-6">
+                Doe eerst de test over de letters van deze les (70% nodig). 
+                Daarna kun je de comprehensieve test maken met alle letters.
+              </p>
+            </>
+          ) : (
+            <p className="text-gray-600 mb-6">
+              Nu ga je een korte test doen om te zien of je de letters goed kent. 
+              Je moet 70% of hoger scoren om de les te voltooien.
+            </p>
+          )}
           
           <div className="flex flex-wrap gap-4 mb-6">
             {lesson.letters.map((letter, index) => (
