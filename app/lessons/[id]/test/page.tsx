@@ -223,7 +223,7 @@ export default function TestPage() {
     }
     
     return exercises.sort(() => Math.random() - 0.5)
-  }, [lesson, lessonId, isComprehensiveTest])
+  }, [lesson, lessonId, isComprehensiveTest, allArabicLetters])
 
   useEffect(() => {
     async function checkAuth() {

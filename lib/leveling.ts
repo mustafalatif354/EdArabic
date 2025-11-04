@@ -63,9 +63,9 @@ export class LevelingSystem {
   }
 
   /**
-   * Get user level data
+   * Calculate user level data from total XP
    */
-  static getUserLevelData(totalXP: number): UserLevelData {
+  static calculateUserLevelData(totalXP: number): UserLevelData {
     const level = this.calculateLevel(totalXP)
     const xpForCurrentLevel = this.getXPForLevel(level)
     const xpForNextLevel = this.getXPForLevel(level + 1)
@@ -119,7 +119,7 @@ export class LevelingSystem {
 
       const currentXP = profile?.xp || 0
       const newXP = currentXP + xpAwarded
-      const newLevelData = this.getUserLevelData(newXP)
+      const newLevelData = this.calculateUserLevelData(newXP)
 
       // Update user profile with new XP and level
       const { error: updateError } = await supabase
@@ -166,7 +166,7 @@ export class LevelingSystem {
       }
 
       const totalXP = profile?.xp || 0
-      return this.getUserLevelData(totalXP)
+      return this.calculateUserLevelData(totalXP)
     } catch (error) {
       console.error('Error in getUserLevelData:', error)
       return null
