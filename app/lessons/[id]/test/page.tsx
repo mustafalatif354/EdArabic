@@ -5,53 +5,40 @@ import { useRouter, useParams } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
 import { LevelingSystem } from "@/lib/leveling"
 
-export default function TestPage() {
-  const router = useRouter()
-  const params = useParams()
-  const [loading, setLoading] = useState(true)
-  const [audio] = useState<HTMLAudioElement>(new Audio())
-  const [currentExercise, setCurrentExercise] = useState(0)
-  const [exerciseScore, setExerciseScore] = useState(0)
-  const [mistakes, setMistakes] = useState(0)
-  const [user, setUser] = useState<any>(null)
-  const [lessonCompleted, setLessonCompleted] = useState(false)
-  const [exercises, setExercises] = useState<any[]>([])
-  const [finalScore, setFinalScore] = useState(0)
-  const [xpAwarded, setXpAwarded] = useState(0)
+// All 28 Arabic letters (module-level so they are stable across renders)
+const allArabicLetters = [
+  { symbol: 'ا', sound: '/sounds/alif.mp3', name: 'Alif', description: 'De eerste letter van het Arabische alfabet' },
+  { symbol: 'ب', sound: '/sounds/ba.mp3', name: 'Ba', description: 'De tweede letter, klinkt als "b"' },
+  { symbol: 'ت', sound: '/sounds/ta.mp3', name: 'Ta', description: 'De derde letter, klinkt als "t"' },
+  { symbol: 'ث', sound: '/sounds/tha.mp3', name: 'Tha', description: 'Klinkt als "th" in "think"' },
+  { symbol: 'ج', sound: '/sounds/jim.mp3', name: 'Jim', description: 'Klinkt als "j" in "jam"' },
+  { symbol: 'ح', sound: '/sounds/ha.mp3', name: 'Ha', description: 'Diepe "h" klank' },
+  { symbol: 'خ', sound: '/sounds/kha.mp3', name: 'Kha', description: 'Klinkt als "ch" in "Bach"' },
+  { symbol: 'د', sound: '/sounds/dal.mp3', name: 'Dal', description: 'Klinkt als "d"' },
+  { symbol: 'ذ', sound: '/sounds/dhal.mp3', name: 'Dhal', description: 'Klinkt als "th" in "that"' },
+  { symbol: 'ر', sound: '/sounds/ra.mp3', name: 'Ra', description: 'Klinkt als "r"' },
+  { symbol: 'ز', sound: '/sounds/za.mp3', name: 'Za', description: 'Klinkt als "z"' },
+  { symbol: 'س', sound: '/sounds/sin.mp3', name: 'Sin', description: 'Klinkt als "s"' },
+  { symbol: 'ش', sound: '/sounds/shin.mp3', name: 'Shin', description: 'Klinkt als "sh" in "ship"' },
+  { symbol: 'ص', sound: '/sounds/sad.mp3', name: 'Sad', description: 'Emfatische "s" klank' },
+  { symbol: 'ض', sound: '/sounds/dad.mp3', name: 'Dad', description: 'Emfatische "d" klank' },
+  { symbol: 'ط', sound: '/sounds/ta.mp3', name: 'Ta', description: 'Emfatische "t" klank' },
+  { symbol: 'ظ', sound: '/sounds/za.mp3', name: 'Za', description: 'Emfatische "z" klank' },
+  { symbol: 'ع', sound: '/sounds/ain.mp3', name: 'Ain', description: 'Diepe keelklank' },
+  { symbol: 'غ', sound: '/sounds/ghain.mp3', name: 'Ghain', description: 'Raspende keelklank' },
+  { symbol: 'ف', sound: '/sounds/fa.mp3', name: 'Fa', description: 'Klinkt als "f"' },
+  { symbol: 'ق', sound: '/sounds/qaf.mp3', name: 'Qaf', description: 'Diepe "q" klank' },
+  { symbol: 'ك', sound: '/sounds/kaf.mp3', name: 'Kaf', description: 'Klinkt als "k"' },
+  { symbol: 'ل', sound: '/sounds/lam.mp3', name: 'Lam', description: 'Klinkt als "l"' },
+  { symbol: 'م', sound: '/sounds/mim.mp3', name: 'Mim', description: 'Klinkt als "m"' },
+  { symbol: 'ن', sound: '/sounds/nun.mp3', name: 'Nun', description: 'Klinkt als "n"' },
+  { symbol: 'ه', sound: '/sounds/ha.mp3', name: 'Ha', description: 'Klinkt als "h"' },
+  { symbol: 'و', sound: '/sounds/waw.mp3', name: 'Waw', description: 'Klinkt als "w" of "u"' },
+  { symbol: 'ي', sound: '/sounds/ya.mp3', name: 'Ya', description: 'Klinkt als "y" of "i"' },
+]
 
-  // All 28 Arabic letters
-  const allArabicLetters = [
-    { symbol: 'ا', sound: '/sounds/alif.mp3', name: 'Alif', description: 'De eerste letter van het Arabische alfabet' },
-    { symbol: 'ب', sound: '/sounds/ba.mp3', name: 'Ba', description: 'De tweede letter, klinkt als "b"' },
-    { symbol: 'ت', sound: '/sounds/ta.mp3', name: 'Ta', description: 'De derde letter, klinkt als "t"' },
-    { symbol: 'ث', sound: '/sounds/tha.mp3', name: 'Tha', description: 'Klinkt als "th" in "think"' },
-    { symbol: 'ج', sound: '/sounds/jim.mp3', name: 'Jim', description: 'Klinkt als "j" in "jam"' },
-    { symbol: 'ح', sound: '/sounds/ha.mp3', name: 'Ha', description: 'Diepe "h" klank' },
-    { symbol: 'خ', sound: '/sounds/kha.mp3', name: 'Kha', description: 'Klinkt als "ch" in "Bach"' },
-    { symbol: 'د', sound: '/sounds/dal.mp3', name: 'Dal', description: 'Klinkt als "d"' },
-    { symbol: 'ذ', sound: '/sounds/dhal.mp3', name: 'Dhal', description: 'Klinkt als "th" in "that"' },
-    { symbol: 'ر', sound: '/sounds/ra.mp3', name: 'Ra', description: 'Klinkt als "r"' },
-    { symbol: 'ز', sound: '/sounds/za.mp3', name: 'Za', description: 'Klinkt als "z"' },
-    { symbol: 'س', sound: '/sounds/sin.mp3', name: 'Sin', description: 'Klinkt als "s"' },
-    { symbol: 'ش', sound: '/sounds/shin.mp3', name: 'Shin', description: 'Klinkt als "sh" in "ship"' },
-    { symbol: 'ص', sound: '/sounds/sad.mp3', name: 'Sad', description: 'Emfatische "s" klank' },
-    { symbol: 'ض', sound: '/sounds/dad.mp3', name: 'Dad', description: 'Emfatische "d" klank' },
-    { symbol: 'ط', sound: '/sounds/ta.mp3', name: 'Ta', description: 'Emfatische "t" klank' },
-    { symbol: 'ظ', sound: '/sounds/za.mp3', name: 'Za', description: 'Emfatische "z" klank' },
-    { symbol: 'ع', sound: '/sounds/ain.mp3', name: 'Ain', description: 'Diepe keelklank' },
-    { symbol: 'غ', sound: '/sounds/ghain.mp3', name: 'Ghain', description: 'Raspende keelklank' },
-    { symbol: 'ف', sound: '/sounds/fa.mp3', name: 'Fa', description: 'Klinkt als "f"' },
-    { symbol: 'ق', sound: '/sounds/qaf.mp3', name: 'Qaf', description: 'Diepe "q" klank' },
-    { symbol: 'ك', sound: '/sounds/kaf.mp3', name: 'Kaf', description: 'Klinkt als "k"' },
-    { symbol: 'ل', sound: '/sounds/lam.mp3', name: 'Lam', description: 'Klinkt als "l"' },
-    { symbol: 'م', sound: '/sounds/mim.mp3', name: 'Mim', description: 'Klinkt als "m"' },
-    { symbol: 'ن', sound: '/sounds/nun.mp3', name: 'Nun', description: 'Klinkt als "n"' },
-    { symbol: 'ه', sound: '/sounds/ha.mp3', name: 'Ha', description: 'Klinkt als "h"' },
-    { symbol: 'و', sound: '/sounds/waw.mp3', name: 'Waw', description: 'Klinkt als "w" of "u"' },
-    { symbol: 'ي', sound: '/sounds/ya.mp3', name: 'Ya', description: 'Klinkt als "y" of "i"' },
-  ]
-
-  const lessonsData = {
+// Lesson metadata (also module-level for stability)
+const lessonsData = {
     1: {
       title: "Les 1: Arabisch Alfabet - Eerste Helft",
       letters: allArabicLetters.slice(0, 14)
@@ -139,6 +126,20 @@ export default function TestPage() {
       ]
     }
   }
+
+export default function TestPage() {
+  const router = useRouter()
+  const params = useParams()
+  const [loading, setLoading] = useState(true)
+  const [audio] = useState<HTMLAudioElement>(new Audio())
+  const [currentExercise, setCurrentExercise] = useState(0)
+  const [exerciseScore, setExerciseScore] = useState(0)
+  const [mistakes, setMistakes] = useState(0)
+  const [user, setUser] = useState<any>(null)
+  const [lessonCompleted, setLessonCompleted] = useState(false)
+  const [exercises, setExercises] = useState<any[]>([])
+  const [finalScore, setFinalScore] = useState(0)
+  const [xpAwarded, setXpAwarded] = useState(0)
 
   const lessonId = parseInt(params.id as string)
   const isComprehensiveTest = lessonId === 99
