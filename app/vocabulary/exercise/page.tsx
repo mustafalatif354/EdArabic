@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useAuth } from "@/lib/useAuth"
 import { supabase } from "@/lib/supabaseClient"
+import { LevelingSystem } from "@/lib/leveling"
 
 interface Word {
   id: number
@@ -175,6 +176,20 @@ export default function VocabularyExercisePage() {
       setFeedback(null)
       setUserAnswer("")
       if (currentIndex + 1 >= questions.length) {
+        // Save XP to progress table using a vocabulary-specific lesson_id (100 + difficulty)
+        const allResults = [...results, { question: currentQuestion, userAnswer: answer, correct }]
+        const finalScore = Math.round((allResults.filter(r => r.correct).length / allResults.length) * 100)
+        const xp = LevelingSystem.calculateXPForScore(finalScore)
+        const level = LEVELS.find(l => l.key === selectedLevel)
+        const vocabLessonId = 100 + (level?.difficulty ?? 1)
+        await supabase.from("progress").upsert({
+          user_id: user?.id,
+          lesson_id: vocabLessonId,
+          completed: true,
+          score: finalScore,
+          xp_earned: xp,
+          completed_at: new Date().toISOString(),
+        }, { onConflict: "user_id,lesson_id" })
         setPhase("results")
       } else {
         setCurrentIndex(i => i + 1)

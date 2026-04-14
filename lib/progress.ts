@@ -5,26 +5,35 @@ export interface ProgressData {
   user_id: string
   lesson_id: number
   completed: boolean
+  score?: number
+  xp_earned?: number
+  completed_at?: string
 }
 
 export class ProgressManager {
-  // Save or update progress for a lesson
-  static async saveProgress(lessonId: number, completed: boolean): Promise<ProgressData | null> {
+  // Save or update progress for a lesson (now includes score + xp)
+  static async saveProgress(
+    lessonId: number,
+    completed: boolean,
+    score: number = 0,
+    xpEarned: number = 0
+  ): Promise<ProgressData | null> {
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        throw new Error('User not authenticated')
-      }
+      if (!user) throw new Error('User not authenticated')
 
       const progressData = {
         user_id: user.id,
         lesson_id: lessonId,
-        completed
+        completed,
+        score,
+        xp_earned: xpEarned,
+        ...(completed ? { completed_at: new Date().toISOString() } : {})
       }
 
       const { data, error } = await supabase
         .from('progress')
-        .upsert(progressData)
+        .upsert(progressData, { onConflict: 'user_id,lesson_id' })
         .select()
         .single()
 
@@ -44,9 +53,7 @@ export class ProgressManager {
   static async getUserProgress(): Promise<ProgressData[]> {
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        throw new Error('User not authenticated')
-      }
+      if (!user) throw new Error('User not authenticated')
 
       const { data, error } = await supabase
         .from('progress')
@@ -70,9 +77,7 @@ export class ProgressManager {
   static async getLessonProgress(lessonId: number): Promise<ProgressData | null> {
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        throw new Error('User not authenticated')
-      }
+      if (!user) throw new Error('User not authenticated')
 
       const { data, error } = await supabase
         .from('progress')
@@ -81,7 +86,7 @@ export class ProgressManager {
         .eq('lesson_id', lessonId)
         .single()
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
+      if (error && error.code !== 'PGRST116') {
         console.error('Error fetching lesson progress:', error)
         return null
       }
@@ -93,16 +98,39 @@ export class ProgressManager {
     }
   }
 
+  // Sum total XP earned across all progress rows
+  static async getTotalXP(): Promise<number> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('User not authenticated')
+
+      const { data, error } = await supabase
+        .from('progress')
+        .select('xp_earned')
+        .eq('user_id', user.id)
+
+      if (error) {
+        console.error('Error fetching XP:', error)
+        return 0
+      }
+
+      return (data || []).reduce((sum, row) => sum + (row.xp_earned || 0), 0)
+    } catch (error) {
+      console.error('Error in getTotalXP:', error)
+      return 0
+    }
+  }
+
   // Calculate overall progress statistics
   static calculateProgressStats(progressData: ProgressData[]) {
-    const totalLessons = 8 // Total number of lessons
+    const totalLessons = 8
     const completedLessons = progressData.filter(p => p.completed).length
     const overallProgress = Math.round((completedLessons / totalLessons) * 100)
 
     return {
       completedLessons,
       totalLessons,
-      averageProgress: overallProgress, // Since we don't have percentage scores, use overall progress
+      averageProgress: overallProgress,
       overallProgress
     }
   }
@@ -113,19 +141,16 @@ export class ProgressManager {
     return comprehensiveTest ? comprehensiveTest.completed : false
   }
 
-  // Check if a lesson is unlocked (previous lesson completed)
+  // Check if a lesson is unlocked
   static isLessonUnlocked(lessonId: number, progressData: ProgressData[]): boolean {
-    if (lessonId === 1) return true // First lesson is always unlocked
+    if (lessonId === 1) return true
     if (lessonId === 2) {
-      // Lesson 2 requires lesson 1 to be completed
       const lesson1 = progressData.find(p => p.lesson_id === 1)
       return lesson1 ? lesson1.completed : false
     }
     if (lessonId >= 3) {
-      // Lessons 3+ require comprehensive test (lesson_id 99) to be completed
       return this.isComprehensiveTestCompleted(progressData)
     }
-    
     const previousLesson = progressData.find(p => p.lesson_id === lessonId - 1)
     return previousLesson ? previousLesson.completed : false
   }
