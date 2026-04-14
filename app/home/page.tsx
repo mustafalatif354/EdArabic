@@ -92,10 +92,6 @@ export default function HomePage() {
           border: '1px solid rgba(255, 255, 255, 0.2)'
         }}
       >
-      <button onClick={() => router.push('/vocabulary')}
-  className="bg-emerald-500 text-white px-6 py-3 rounded-xl">
-  📖 Woordenschat / Vocabulary
-</button>
         {isLocked && (
           <div className="absolute inset-0 bg-gray-900/20 backdrop-blur-sm z-20 flex items-center justify-center rounded-3xl">
             <div className="text-center">
@@ -513,6 +509,10 @@ export default function HomePage() {
                   <p className="text-gray-500 text-sm">Binnenkort beschikbaar / Coming soon</p>
                 </div>
               )}
+              <button onClick={() => router.push('/vocabulary')}
+  className="bg-emerald-500 text-white px-6 py-3 rounded-xl">
+  📖 Woordenschat / Vocabulary
+</button>
             </div>
           </div>
         </div>
