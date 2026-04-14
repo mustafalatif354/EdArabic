@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
+import { useAuth } from "@/lib/useAuth"
+import { getAllLessons, Lesson } from "@/lib/lessonsData"
 import { ProgressManager, ProgressData } from "@/lib/progress"
 import { LevelingSystem, UserLevelData } from "@/lib/leveling"
 import InstallPWA from "@/components/InstallPWA"
@@ -33,8 +35,9 @@ const customStyles = `
 
 export default function HomePage() {
   const router = useRouter()
-  const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<any>(null)
+  const { user, loading: authLoading } = useAuth()
+
+  const [dataLoading, setDataLoading] = useState(true)
   const [userProfile, setUserProfile] = useState<any>(null)
   const [userProgress, setUserProgress] = useState<ProgressData[]>([])
   const [progressStats, setProgressStats] = useState({
@@ -46,21 +49,11 @@ export default function HomePage() {
   const [userLevelData, setUserLevelData] = useState<UserLevelData | null>(null)
   const [scrollProgress, setScrollProgress] = useState(0)
 
-  // Lessons data organized by category
-  const alphabetLessons = [
-    { id: 1, title: "Les 1: Arabisch Alfabet - Eerste Helft", color: "from-emerald-400 to-emerald-600", icon: "📚" },
-    { id: 2, title: "Les 2: Arabisch Alfabet - Tweede Helft", color: "from-blue-400 to-blue-600", icon: "🔤" },
-    { id: 3, title: "Les 3: Geavanceerde Letters", color: "from-purple-400 to-purple-600", icon: "✨" },
-    { id: 4, title: "Les 4: Nieuwe Vormen", color: "from-pink-400 to-pink-600", icon: "🎨" },
-    { id: 5, title: "Les 5: Uitbreiding", color: "from-indigo-400 to-indigo-600", icon: "📖" },
-    { id: 6, title: "Les 6: Verder Leren", color: "from-cyan-400 to-cyan-600", icon: "🌟" },
-    { id: 7, title: "Les 7: Bijna Klaar", color: "from-teal-400 to-teal-600", icon: "🎯" },
-    { id: 8, title: "Les 8: Complete Alfabet", color: "from-emerald-500 to-blue-500", icon: "🏆" },
-  ]
-
-  const tajweedLessons: any[] = []
-  const quranReadLessons: any[] = []
-  const quranListenLessons: any[] = []
+  // Lessons fetched from Supabase, split by category
+  const [alphabetLessons, setAlphabetLessons] = useState<Lesson[]>([])
+  const [tajweedLessons, setTajweedLessons] = useState<Lesson[]>([])
+  const [quranReadLessons, setQuranReadLessons] = useState<Lesson[]>([])
+  const [quranListenLessons, setQuranListenLessons] = useState<Lesson[]>([])
 
   const getLessonProgress = (lessonId: number) => {
     if (!userProgress) return { completed: false, progress: 0 }
@@ -77,7 +70,7 @@ export default function HomePage() {
   }
 
   // Helper function to render lesson cards
-  const renderLessonCard = (lesson: any) => {
+  const renderLessonCard = (lesson: Lesson) => {
     const progress = getLessonProgress(lesson.id)
     const unlocked = isLessonUnlocked(lesson.id)
     const isLocked = !unlocked
@@ -103,9 +96,9 @@ export default function HomePage() {
           <div className="absolute inset-0 bg-gray-900/20 backdrop-blur-sm z-20 flex items-center justify-center rounded-3xl">
             <div className="text-center">
               <div className="text-4xl mb-2">🔒</div>
-              <div className="text-sm font-bold text-gray-700">Vergrendeld</div>
+              <div className="text-sm font-bold text-gray-700">Vergrendeld / Locked</div>
               <div className="text-xs text-gray-600 mt-1">
-                {lesson.id === 2 ? 'Voltooi les 1 eerst' : 'Voltooi de comprehensieve test eerst'}
+                {lesson.id === 2 ? 'Voltooi les 1 eerst / Complete lesson 1 first' : 'Voltooi de vorige les / Complete the previous lesson'}
               </div>
             </div>
           </div>
@@ -123,14 +116,15 @@ export default function HomePage() {
         
         {/* Content */}
         <div className="relative z-10 text-center">
-          <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-emerald-600 transition-colors duration-300">
-            {lesson.title}
+          <h3 className="text-lg font-bold text-gray-900 mb-1 group-hover:text-emerald-600 transition-colors duration-300">
+            {lesson.title_nl}
           </h3>
+          <p className="text-xs text-gray-400 mb-2">{lesson.title_en}</p>
           
           {/* Progress Indicator */}
           {progress.completed ? (
             <div className="flex items-center justify-center gap-2 mt-3">
-              <span className="text-emerald-600 text-sm font-medium">✓ Voltooid</span>
+              <span className="text-emerald-600 text-sm font-medium">✓ Voltooid / Completed</span>
             </div>
           ) : progress.progress > 0 ? (
             <div className="mt-3">
@@ -143,7 +137,7 @@ export default function HomePage() {
               <span className="text-xs text-gray-600 mt-1">{progress.progress}%</span>
             </div>
           ) : (
-            <span className="text-gray-500 text-sm mt-2 block">Nog niet gestart</span>
+            <span className="text-gray-500 text-sm mt-2 block">Nog niet gestart / Not started</span>
           )}
         </div>
 
@@ -155,41 +149,43 @@ export default function HomePage() {
     )
   }
 
+  // Fetch all dashboard data once auth is confirmed
   useEffect(() => {
-    async function checkAuth() {
-      const { data } = await supabase.auth.getUser()
-      if (!data.user) {
-        router.push("/login")
-      } else {
-        setUser(data.user)
-        
-        // Fetch user profile
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('user_id', data.user.id)
-          .single()
+    if (!user) return
 
-        setUserProfile(profile)
+    async function loadDashboardData() {
+      // Fetch user profile
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', user!.id)
+        .single()
+      setUserProfile(profile)
 
-        // Fetch user progress using ProgressManager
-        const progress = await ProgressManager.getUserProgress()
-        setUserProgress(progress)
-        
-        // Calculate progress statistics
-        const stats = ProgressManager.calculateProgressStats(progress)
-        setProgressStats(stats)
-        
-        // Fetch user level data
-        const levelData = await LevelingSystem.getUserLevelData()
-        setUserLevelData(levelData)
-        
-        setLoading(false)
-      }
+      // Fetch lessons from DB and split by category
+      const allLessons = await getAllLessons()
+      setAlphabetLessons(allLessons.filter(l => l.category === 'alphabet'))
+      setTajweedLessons(allLessons.filter(l => l.category === 'tajweed'))
+      setQuranReadLessons(allLessons.filter(l => l.category === 'quran-read'))
+      setQuranListenLessons(allLessons.filter(l => l.category === 'quran-listen'))
+
+      // Fetch user progress
+      const progress = await ProgressManager.getUserProgress()
+      setUserProgress(progress)
+
+      // Calculate progress statistics
+      const stats = ProgressManager.calculateProgressStats(progress)
+      setProgressStats(stats)
+
+      // Fetch user level data
+      const levelData = await LevelingSystem.getUserLevelData()
+      setUserLevelData(levelData)
+
+      setDataLoading(false)
     }
 
-    checkAuth()
-  }, [router])
+    loadDashboardData()
+  }, [user])
 
   // Track scroll progress
   useEffect(() => {
@@ -209,7 +205,7 @@ export default function HomePage() {
     router.push("/login")
   }
 
-  if (loading) {
+  if (authLoading || dataLoading) {
     return (
       <main className="min-h-screen bg-emerald-50 flex items-center justify-center">
         <p>Bezig met laden...</p>
@@ -231,10 +227,7 @@ export default function HomePage() {
 
         {/* 3D Background Elements */}
         <div className="fixed inset-0 -z-10">
-          {/* Animated gradient background */}
           <div className="absolute inset-0 bg-gradient-to-br from-emerald-100 via-blue-50 to-purple-100 animate-pulse" />
-          
-          {/* Floating 3D shapes */}
           <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full opacity-20 animate-bounce" 
                style={{ animationDuration: '6s', animationDelay: '0s' }} />
           <div className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full opacity-20 animate-bounce" 
@@ -243,22 +236,16 @@ export default function HomePage() {
                style={{ animationDuration: '7s', animationDelay: '4s' }} />
           <div className="absolute top-60 right-1/3 w-28 h-28 bg-gradient-to-r from-pink-400 to-pink-600 rounded-full opacity-20 animate-bounce" 
                style={{ animationDuration: '9s', animationDelay: '1s' }} />
-          
-          {/* Geometric shapes */}
           <div className="absolute top-32 right-10 w-16 h-16 bg-gradient-to-r from-emerald-300 to-blue-300 rotate-45 opacity-30 animate-spin" 
                style={{ animationDuration: '20s' }} />
           <div className="absolute bottom-32 left-10 w-12 h-12 bg-gradient-to-r from-blue-300 to-purple-300 rotate-12 opacity-30 animate-spin" 
                style={{ animationDuration: '15s', animationDirection: 'reverse' }} />
-          
-          {/* Floating particles */}
           <div className="absolute top-1/4 left-1/3 w-2 h-2 bg-emerald-400 rounded-full opacity-60 animate-ping" 
                style={{ animationDelay: '0s' }} />
           <div className="absolute top-1/2 right-1/4 w-3 h-3 bg-blue-400 rounded-full opacity-60 animate-ping" 
                style={{ animationDelay: '1s' }} />
           <div className="absolute bottom-1/3 left-1/2 w-2 h-2 bg-purple-400 rounded-full opacity-60 animate-ping" 
                style={{ animationDelay: '2s' }} />
-          
-          {/* Background pattern overlay */}
           <div className="absolute inset-0 opacity-5" 
                style={{
                  backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23059669' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
@@ -330,7 +317,7 @@ export default function HomePage() {
                 Kies een les om te beginnen of verder te gaan
               </p>
               
-              {/* Level Display - Always visible */}
+              {/* Level Display */}
               <div className="max-w-2xl mx-auto bg-white/90 backdrop-blur-sm rounded-3xl p-6 shadow-xl mb-6">
                 {userLevelData ? (
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8">
@@ -414,8 +401,8 @@ export default function HomePage() {
                         <div className="absolute inset-0 bg-gray-900/20 backdrop-blur-sm z-20 flex items-center justify-center rounded-3xl">
                           <div className="text-center">
                             <div className="text-4xl mb-2">🔒</div>
-                            <div className="text-sm font-bold text-gray-700">Vergrendeld</div>
-                            <div className="text-xs text-gray-600 mt-1">Voltooi les 2 eerst</div>
+                            <div className="text-sm font-bold text-gray-700">Vergrendeld / Locked</div>
+                            <div className="text-xs text-gray-600 mt-1">Voltooi les 2 eerst / Complete lesson 2 first</div>
                           </div>
                         </div>
                       )}
@@ -429,25 +416,26 @@ export default function HomePage() {
                         </div>
                         
                         <div className="text-center">
-                          <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors duration-300">
+                          <h3 className="text-lg font-bold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors duration-300">
                             Comprehensieve Test
                           </h3>
+                          <p className="text-xs text-gray-400 mb-2">Comprehensive Test</p>
                           <p className="text-gray-600 text-sm mb-3">
                             Alle 28 letters
                           </p>
                           
                           {testCompleted ? (
                             <div className="flex items-center justify-center gap-2 mt-3">
-                              <span className="text-emerald-600 text-sm font-medium">✓ Voltooid</span>
+                              <span className="text-emerald-600 text-sm font-medium">✓ Voltooid / Completed</span>
                             </div>
                           ) : canTakeTest ? (
                             <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 mt-3">
                               <p className="text-blue-800 text-xs font-medium">
-                                Minimaal 80% nodig
+                                Minimaal 80% nodig / Min. 80% required
                               </p>
                             </div>
                           ) : (
-                            <p className="text-gray-500 text-xs mt-3">Voltooi les 2 eerst</p>
+                            <p className="text-gray-500 text-xs mt-3">Voltooi les 2 eerst / Complete lesson 2 first</p>
                           )}
                         </div>
                       </div>
@@ -476,7 +464,7 @@ export default function HomePage() {
                   <div className="text-6xl mb-4">🕌</div>
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">Tajweed Lessen</h3>
                   <p className="text-gray-600 mb-4">Leer de regels voor correcte Quran recitatie</p>
-                  <p className="text-gray-500 text-sm">Binnenkort beschikbaar</p>
+                  <p className="text-gray-500 text-sm">Binnenkort beschikbaar / Coming soon</p>
                 </div>
               )}
             </div>
@@ -497,7 +485,7 @@ export default function HomePage() {
                   <div className="text-6xl mb-4">📖</div>
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">Quran Lezen</h3>
                   <p className="text-gray-600 mb-4">Lees de heilige Quran</p>
-                  <p className="text-gray-500 text-sm">Binnenkort beschikbaar</p>
+                  <p className="text-gray-500 text-sm">Binnenkort beschikbaar / Coming soon</p>
                 </div>
               )}
             </div>
@@ -518,7 +506,7 @@ export default function HomePage() {
                   <div className="text-6xl mb-4">🎧</div>
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">Quran Luisteren</h3>
                   <p className="text-gray-600 mb-4">Luister en leer van mooie Quran recitatie</p>
-                  <p className="text-gray-500 text-sm">Binnenkort beschikbaar</p>
+                  <p className="text-gray-500 text-sm">Binnenkort beschikbaar / Coming soon</p>
                 </div>
               )}
             </div>
