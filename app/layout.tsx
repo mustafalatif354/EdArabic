@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Navbar from "@/components/Navbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -55,10 +56,12 @@ export default function RootLayout({
         <meta name="theme-color" content="#10b981" />
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <Navbar />
+        {/* pt-16 pushes content below the fixed navbar */}
+        <div className="pt-16">
+          {children}
+        </div>
       </body>
     </html>
   );

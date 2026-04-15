@@ -172,7 +172,7 @@ export default function VocabularyExercisePage() {
     setFeedback(correct ? "correct" : "wrong")
     setResults(prev => [...prev, { question: currentQuestion, userAnswer: answer, correct }])
 
-    setTimeout(() => {
+    setTimeout(async () => {
       setFeedback(null)
       setUserAnswer("")
       if (currentIndex + 1 >= questions.length) {
@@ -183,7 +183,7 @@ export default function VocabularyExercisePage() {
         const level = LEVELS.find(l => l.key === selectedLevel)
         const vocabLessonId = 100 + (level?.difficulty ?? 1)
         await supabase.from("progress").upsert({
-          user_id: user?.id,
+          user_id: user!.id,
           lesson_id: vocabLessonId,
           completed: true,
           score: finalScore,

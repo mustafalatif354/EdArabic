@@ -1,4 +1,3 @@
-import { supabase } from './supabaseClient'
 import { ProgressManager } from './progress'
 
 export interface UserLevelData {
