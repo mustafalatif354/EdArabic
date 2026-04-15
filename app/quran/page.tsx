@@ -46,7 +46,7 @@ export default function QuranPage() {
         const { data: prog } = await supabase
           .from("quran_progress")
           .select("surah_id, completed, score")
-          .eq("user_id", user.id)
+          .eq("user_id", user!.id)
         setProgress(prog || [])
       } catch (err) {
         setError("Kon Quran data niet laden. Controleer je internetverbinding. / Could not load Quran data.")
