@@ -1,5 +1,6 @@
 "use client"
 
+import { Suspense } from "react"
 import { useEffect, useState, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useAuth } from "@/lib/useAuth"
@@ -20,8 +21,8 @@ type QuestionType = "mc-arabic-to-def" | "mc-def-to-arabic" | "type-arabic-to-de
 interface Question {
   type: QuestionType
   word: Word
-  options?: string[]   // for multiple choice
-  correct: string      // the correct answer string
+  options?: string[]
+  correct: string
 }
 
 interface Result {
@@ -48,17 +49,12 @@ function buildQuestions(words: Word[]): Question[] {
   const mcWords = words.slice(0, half)
   const typeWords = words.slice(half)
 
-  // --- Multiple choice phase ---
   mcWords.forEach((word, i) => {
-    // Alternate between: show Arabic → pick definition, show definition → pick Arabic
     if (i % 2 === 0) {
-      // Show Arabic, pick definition (NL or EN randomly)
       const useNL = Math.random() > 0.5
       const correct = useNL ? word.definition_nl : word.definition_en
       const distractors = shuffle(
-        words
-          .filter(w => w.id !== word.id)
-          .map(w => useNL ? w.definition_nl : w.definition_en)
+        words.filter(w => w.id !== word.id).map(w => useNL ? w.definition_nl : w.definition_en)
       ).slice(0, 3)
       questions.push({
         type: "mc-arabic-to-def",
@@ -67,8 +63,6 @@ function buildQuestions(words: Word[]): Question[] {
         options: shuffle([correct, ...distractors]),
       })
     } else {
-      // Show definition, pick Arabic
-      const useNL = Math.random() > 0.5
       const correct = word.arabic
       const distractors = shuffle(
         words.filter(w => w.id !== word.id).map(w => w.arabic)
@@ -78,15 +72,12 @@ function buildQuestions(words: Word[]): Question[] {
         word,
         correct,
         options: shuffle([correct, ...distractors]),
-        // store which language the definition prompt is in
       })
     }
   })
 
-  // --- Typing phase ---
   typeWords.forEach((word, i) => {
     if (i % 2 === 0) {
-      // Show Arabic, type definition
       const useNL = Math.random() > 0.5
       questions.push({
         type: "type-arabic-to-def",
@@ -94,7 +85,6 @@ function buildQuestions(words: Word[]): Question[] {
         correct: useNL ? word.definition_nl : word.definition_en,
       })
     } else {
-      // Show definition, type Arabic transliteration (easier than Arabic script)
       questions.push({
         type: "type-def-to-arabic",
         word,
@@ -111,7 +101,8 @@ function isCorrectAnswer(userAnswer: string, correct: string): boolean {
   return normalize(userAnswer) === normalize(correct)
 }
 
-export default function VocabularyExercisePage() {
+// ── Inner component (uses useSearchParams) ────────────────
+function VocabularyExercisePageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user, loading: authLoading } = useAuth()
@@ -120,7 +111,6 @@ export default function VocabularyExercisePage() {
 
   const [phase, setPhase] = useState<Phase>("setup")
   const [selectedLevel, setSelectedLevel] = useState(preselectedLevel)
-  const [words, setWords] = useState<Word[]>([])
   const [questions, setQuestions] = useState<Question[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [userAnswer, setUserAnswer] = useState("")
@@ -133,7 +123,6 @@ export default function VocabularyExercisePage() {
   const isTyping = currentQuestion?.type.startsWith("type-")
   const isMidpoint = currentIndex === Math.ceil(questions.length / 2)
 
-  // Load words when level selected
   const loadWords = useCallback(async (levelKey: string) => {
     setDataLoading(true)
     const level = LEVELS.find(l => l.key === levelKey)
@@ -147,7 +136,6 @@ export default function VocabularyExercisePage() {
 
     if (data) {
       const shuffled = shuffle(data)
-      setWords(shuffled)
       setQuestions(buildQuestions(shuffled))
     }
     setDataLoading(false)
@@ -158,7 +146,6 @@ export default function VocabularyExercisePage() {
     setFeedback(null)
   }, [])
 
-  // If level was preselected via query param, auto-load
   useEffect(() => {
     if (user && preselectedLevel && phase === "setup") {
       setSelectedLevel(preselectedLevel)
@@ -176,7 +163,6 @@ export default function VocabularyExercisePage() {
       setFeedback(null)
       setUserAnswer("")
       if (currentIndex + 1 >= questions.length) {
-        // Save XP to progress table using a vocabulary-specific lesson_id (100 + difficulty)
         const allResults = [...results, { question: currentQuestion, userAnswer: answer, correct }]
         const finalScore = Math.round((allResults.filter(r => r.correct).length / allResults.length) * 100)
         const xp = LevelingSystem.calculateXPForScore(finalScore)
@@ -210,7 +196,7 @@ export default function VocabularyExercisePage() {
     )
   }
 
-  // ── SETUP PHASE ──────────────────────────────────────────
+  // ── SETUP PHASE ───────────────────────────────────────────
   if (phase === "setup") {
     return (
       <main className="min-h-screen bg-gradient-to-br from-emerald-50 via-blue-50 to-purple-50">
@@ -254,7 +240,7 @@ export default function VocabularyExercisePage() {
 
   // ── EXERCISE PHASE ────────────────────────────────────────
   if (phase === "exercise" && currentQuestion) {
-    const progress = Math.round(((currentIndex) / questions.length) * 100)
+    const progress = Math.round((currentIndex / questions.length) * 100)
     const isSecondHalf = currentIndex >= Math.ceil(questions.length / 2)
 
     return (
@@ -279,7 +265,6 @@ export default function VocabularyExercisePage() {
           </div>
         </header>
 
-        {/* Phase transition notice */}
         {isMidpoint && (
           <div className="bg-blue-50 border-b border-blue-200 text-center py-2 text-sm text-blue-700 font-medium">
             Nu begin je met invulvragen! / Now typing questions begin!
@@ -288,8 +273,6 @@ export default function VocabularyExercisePage() {
 
         <div className="max-w-3xl mx-auto px-4 py-10">
           <div className="bg-white rounded-3xl shadow-xl p-8">
-
-            {/* Question prompt */}
             <div className="text-center mb-8">
               {(currentQuestion.type === "mc-arabic-to-def" || currentQuestion.type === "type-arabic-to-def") && (
                 <>
@@ -311,14 +294,12 @@ export default function VocabularyExercisePage() {
               )}
             </div>
 
-            {/* Feedback overlay */}
             {feedback && (
               <div className={`text-center text-2xl font-bold mb-6 ${feedback === "correct" ? "text-emerald-500" : "text-red-500"}`}>
                 {feedback === "correct" ? "✓ Correct!" : `✗ Fout — ${currentQuestion.correct}`}
               </div>
             )}
 
-            {/* Multiple choice options */}
             {isMultipleChoice && currentQuestion.options && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {currentQuestion.options.map((option, i) => {
@@ -344,7 +325,6 @@ export default function VocabularyExercisePage() {
               </div>
             )}
 
-            {/* Typing input */}
             {isTyping && (
               <div className="flex flex-col gap-4">
                 <input
@@ -379,13 +359,11 @@ export default function VocabularyExercisePage() {
   // ── RESULTS PHASE ─────────────────────────────────────────
   if (phase === "results") {
     const score = Math.round((results.filter(r => r.correct).length / results.length) * 100)
-    const xpEarned = Math.round(score / 10) * 5  // 0–50 XP based on score
+    const xpEarned = LevelingSystem.calculateXPForScore(score)
 
     return (
       <main className="min-h-screen bg-gradient-to-br from-emerald-50 via-blue-50 to-purple-50">
         <div className="max-w-3xl mx-auto px-4 py-10">
-
-          {/* Score card */}
           <div className="bg-white rounded-3xl shadow-xl p-10 text-center mb-8">
             <div className="text-6xl mb-4">{score >= 80 ? "🏆" : score >= 60 ? "👍" : "💪"}</div>
             <h1 className="text-3xl font-bold text-gray-900 mb-1">Resultaten / Results</h1>
@@ -400,7 +378,6 @@ export default function VocabularyExercisePage() {
             </div>
           </div>
 
-          {/* Per-question breakdown */}
           <div className="bg-white rounded-3xl shadow-xl p-6 mb-8">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Overzicht / Overview</h2>
             <div className="space-y-3">
@@ -431,7 +408,6 @@ export default function VocabularyExercisePage() {
             </div>
           </div>
 
-          {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-4">
             <button
               onClick={() => loadWords(selectedLevel)}
@@ -458,4 +434,17 @@ export default function VocabularyExercisePage() {
   }
 
   return null
+}
+
+// ── Suspense wrapper (required for useSearchParams in Next.js 15) ──
+export default function VocabularyExercisePage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen bg-emerald-50 flex items-center justify-center">
+        <p className="text-gray-600">Bezig met laden...</p>
+      </main>
+    }>
+      <VocabularyExercisePageInner />
+    </Suspense>
+  )
 }
