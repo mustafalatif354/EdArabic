@@ -3,21 +3,22 @@
 import { useRouter, usePathname } from "next/navigation"
 import { useState } from "react"
 import { supabase } from "@/lib/supabaseClient"
-
-const navLinks = [
-  { label: "Dashboard",   labelEn: "Dashboard",   href: "/home",       icon: "🏠" },
-  { label: "Alfabet",     labelEn: "Alphabet",     href: "/alphabet",   icon: "🔤" },
-  { label: "Woordenschat",labelEn: "Vocabulary",   href: "/vocabulary", icon: "📖" },
-  { label: "Quran",       labelEn: "Quran",        href: "/quran",      icon: "📗" },
-]
+import { useLanguage } from "@/lib/LanguageContext"
 
 export default function Navbar() {
   const router = useRouter()
   const pathname = usePathname()
+  const { lang, toggleLang, t } = useLanguage()
   const [menuOpen, setMenuOpen] = useState(false)
 
-  // Hide navbar on landing and login pages
   if (pathname === "/" || pathname === "/login") return null
+
+  const navLinks = [
+    { label: t("Dashboard", "Dashboard"), href: "/home",       icon: "🏠" },
+    { label: t("Alfabet",   "Alphabet"),  href: "/alphabet",   icon: "🔤" },
+    { label: t("Woorden",   "Vocabulary"),href: "/vocabulary", icon: "📖" },
+    { label: t("Quran",     "Quran"),     href: "/quran",      icon: "📗" },
+  ]
 
   const isActive = (href: string) => {
     if (href === "/home") return pathname === "/home"
@@ -60,19 +61,33 @@ export default function Navbar() {
             ))}
           </div>
 
-          {/* Logout button — desktop */}
-          <button
-            onClick={handleLogout}
-            className="hidden md:block text-sm text-gray-500 hover:text-red-500 transition-colors px-3 py-2 rounded-lg hover:bg-red-50"
-          >
-            Uitloggen / Logout
-          </button>
+          {/* Right side: language toggle + logout */}
+          <div className="hidden md:flex items-center gap-3">
+            {/* Language toggle */}
+            <button
+              onClick={toggleLang}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:border-emerald-400 hover:text-emerald-600 transition-all"
+              title={lang === "nl" ? "Switch to English" : "Schakel naar Nederlands"}
+            >
+              <span>{lang === "nl" ? "🇳🇱" : "🇬🇧"}</span>
+              <span>{lang === "nl" ? "NL" : "EN"}</span>
+              <span className="text-gray-400">→</span>
+              <span>{lang === "nl" ? "EN" : "NL"}</span>
+            </button>
+
+            {/* Logout */}
+            <button
+              onClick={handleLogout}
+              className="text-sm text-gray-500 hover:text-red-500 transition-colors px-3 py-2 rounded-lg hover:bg-red-50"
+            >
+              {t("Uitloggen", "Logout")}
+            </button>
+          </div>
 
           {/* Mobile hamburger */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition"
-            aria-label="Menu"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               {menuOpen
@@ -96,16 +111,24 @@ export default function Navbar() {
                     : "text-gray-600 hover:bg-emerald-50 hover:text-emerald-600"
                 }`}
               >
-                <span className="text-base">{link.icon}</span>
-                <span>{link.label} / {link.labelEn}</span>
+                <span>{link.icon}</span>
+                <span>{link.label}</span>
               </button>
             ))}
+            {/* Language toggle mobile */}
+            <button
+              onClick={() => { toggleLang(); setMenuOpen(false) }}
+              className="w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-emerald-50 flex items-center gap-3"
+            >
+              <span>{lang === "nl" ? "🇬🇧" : "🇳🇱"}</span>
+              <span>{lang === "nl" ? "Switch to English" : "Schakel naar Nederlands"}</span>
+            </button>
             <button
               onClick={handleLogout}
               className="w-full text-left px-4 py-3 rounded-lg text-sm text-red-500 hover:bg-red-50 transition flex items-center gap-3"
             >
               <span>🚪</span>
-              <span>Uitloggen / Logout</span>
+              <span>{t("Uitloggen", "Logout")}</span>
             </button>
           </div>
         )}
