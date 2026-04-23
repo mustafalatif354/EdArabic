@@ -277,7 +277,7 @@ function VocabularyExercisePageInner() {
               {(currentQuestion.type === "mc-arabic-to-def" || currentQuestion.type === "type-arabic-to-def") && (
                 <>
                   <p className="text-gray-500 text-sm mb-3">Wat betekent dit woord? / What does this word mean?</p>
-                  <div className="text-6xl font-bold text-gray-800 mb-2" dir="rtl">{currentQuestion.word.arabic}</div>
+                  <div className="text-8xl font-bold text-gray-800 mb-4" dir="rtl" style={{ fontFamily: 'serif', lineHeight: '1.4' }}>{currentQuestion.word.arabic}</div>
                   <div className="text-emerald-600 font-mono text-lg">/{currentQuestion.word.transliteration}/</div>
                 </>
               )}
