@@ -5,6 +5,123 @@ import { useState } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import { useLanguage } from "@/lib/LanguageContext"
 
+const navStyles = `
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&display=swap');
+
+  .edarabic-nav {
+    background: rgba(10, 10, 15, 0.75);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(212, 175, 55, 0.18);
+  }
+
+  .nav-logo {
+    font-family: 'Cormorant Garamond', serif;
+    color: #d4af37;
+    letter-spacing: 0.02em;
+  }
+
+  .nav-diamond {
+    width: 24px;
+    height: 24px;
+    transform: rotate(45deg);
+    background: linear-gradient(135deg, #d4af37, #b8941f);
+    box-shadow: 0 0 12px rgba(212, 175, 55, 0.5);
+    transition: box-shadow 0.4s, transform 0.4s;
+  }
+  .nav-logo-wrap:hover .nav-diamond {
+    transform: rotate(135deg);
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.8);
+  }
+
+  .nav-link {
+    color: rgba(245, 236, 215, 0.7);
+    transition: all 0.3s;
+    position: relative;
+    padding: 8px 16px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+  }
+  .nav-link:hover {
+    color: #d4af37;
+  }
+  .nav-link.active {
+    color: #d4af37;
+  }
+  .nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    background: #d4af37;
+    transform: translateX(-50%) rotate(45deg);
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.8);
+  }
+
+  .nav-toggle {
+    color: #d4af37;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    background: rgba(212, 175, 55, 0.05);
+    transition: all 0.3s;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    padding: 6px 12px;
+    border-radius: 2px;
+  }
+  .nav-toggle:hover {
+    background: rgba(212, 175, 55, 0.15);
+    border-color: #d4af37;
+  }
+
+  .nav-logout {
+    color: rgba(245, 236, 215, 0.5);
+    font-size: 0.813rem;
+    padding: 6px 14px;
+    transition: color 0.3s;
+  }
+  .nav-logout:hover {
+    color: #e74c3c;
+  }
+
+  .nav-hamburger {
+    color: #d4af37;
+    padding: 8px;
+    border-radius: 4px;
+    transition: background 0.3s;
+  }
+  .nav-hamburger:hover {
+    background: rgba(212, 175, 55, 0.1);
+  }
+
+  .mobile-menu {
+    border-top: 1px solid rgba(212, 175, 55, 0.15);
+  }
+  .mobile-link {
+    color: rgba(245, 236, 215, 0.7);
+    padding: 12px 16px;
+    font-size: 0.875rem;
+    letter-spacing: 0.02em;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.3s;
+    width: 100%;
+    text-align: left;
+  }
+  .mobile-link:hover {
+    color: #d4af37;
+    background: rgba(212, 175, 55, 0.05);
+  }
+  .mobile-link.active {
+    color: #d4af37;
+    background: rgba(212, 175, 55, 0.1);
+  }
+`
+
 export default function Navbar() {
   const router = useRouter()
   const pathname = usePathname()
@@ -14,10 +131,10 @@ export default function Navbar() {
   if (pathname === "/" || pathname === "/login") return null
 
   const navLinks = [
-    { label: t("Dashboard", "Dashboard"), href: "/home",       icon: "🏠" },
-    { label: t("Alfabet",   "Alphabet"),  href: "/alphabet",   icon: "🔤" },
-    { label: t("Woorden",   "Vocabulary"),href: "/vocabulary", icon: "📖" },
-    { label: t("Quran",     "Quran"),     href: "/quran",      icon: "📗" },
+    { label: t("Dashboard", "Dashboard"), href: "/home" },
+    { label: t("Alfabet", "Alphabet"),    href: "/alphabet" },
+    { label: t("Woorden", "Vocabulary"),  href: "/vocabulary" },
+    { label: "Quran",                      href: "/quran" },
   ]
 
   const isActive = (href: string) => {
@@ -31,108 +148,87 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="fixed top-0 left-0 w-full bg-white/95 backdrop-blur-sm shadow-sm z-50 border-b border-gray-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+    <>
+      <style dangerouslySetInnerHTML={{ __html: navStyles }} />
+      <nav className="edarabic-nav fixed top-0 left-0 w-full z-50">
+        <div className="max-w-7xl mx-auto px-6 lg:px-10">
+          <div className="flex items-center justify-between h-16">
 
-          {/* Logo */}
-          <div
-            className="text-xl font-bold text-emerald-600 cursor-pointer hover:text-emerald-700 transition-colors shrink-0"
-            onClick={() => router.push("/home")}
-          >
-            EdArabic
-          </div>
+            {/* Logo */}
+            <div
+              className="nav-logo-wrap flex items-center gap-3 cursor-pointer"
+              onClick={() => router.push("/home")}
+            >
+              <div className="nav-diamond" />
+              <span className="nav-logo text-2xl font-medium">EdArabic</span>
+            </div>
 
-          {/* Desktop nav links */}
-          <div className="hidden md:flex items-center gap-1">
-            {navLinks.map(link => (
+            {/* Desktop nav */}
+            <div className="hidden md:flex items-center gap-1">
+              {navLinks.map(link => (
+                <button
+                  key={link.href}
+                  onClick={() => router.push(link.href)}
+                  className={`nav-link ${isActive(link.href) ? "active" : ""}`}
+                >
+                  {link.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Right side */}
+            <div className="hidden md:flex items-center gap-4">
               <button
-                key={link.href}
-                onClick={() => router.push(link.href)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
-                  isActive(link.href)
-                    ? "bg-emerald-500 text-white shadow-sm"
-                    : "text-gray-600 hover:bg-emerald-50 hover:text-emerald-600"
-                }`}
+                onClick={toggleLang}
+                className="nav-toggle uppercase font-medium"
+                title={lang === "nl" ? "Switch to English" : "Schakel naar Nederlands"}
               >
-                <span className="text-base">{link.icon}</span>
-                <span>{link.label}</span>
+                {lang === "nl" ? "NL · EN" : "EN · NL"}
               </button>
-            ))}
-          </div>
+              <button onClick={handleLogout} className="nav-logout">
+                {t("Uitloggen", "Logout")}
+              </button>
+            </div>
 
-          {/* Right side: language toggle + logout */}
-          <div className="hidden md:flex items-center gap-3">
-            {/* Language toggle */}
+            {/* Mobile hamburger */}
             <button
-              onClick={toggleLang}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:border-emerald-400 hover:text-emerald-600 transition-all"
-              title={lang === "nl" ? "Switch to English" : "Schakel naar Nederlands"}
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="md:hidden nav-hamburger"
             >
-              <span>{lang === "nl" ? "🇳🇱" : "🇬🇧"}</span>
-              <span>{lang === "nl" ? "NL" : "EN"}</span>
-              <span className="text-gray-400">→</span>
-              <span>{lang === "nl" ? "EN" : "NL"}</span>
-            </button>
-
-            {/* Logout */}
-            <button
-              onClick={handleLogout}
-              className="text-sm text-gray-500 hover:text-red-500 transition-colors px-3 py-2 rounded-lg hover:bg-red-50"
-            >
-              {t("Uitloggen", "Logout")}
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {menuOpen
+                  ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                }
+              </svg>
             </button>
           </div>
 
-          {/* Mobile hamburger */}
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              {menuOpen
-                ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              }
-            </svg>
-          </button>
+          {/* Mobile menu */}
+          {menuOpen && (
+            <div className="mobile-menu md:hidden pb-4 pt-2">
+              {navLinks.map(link => (
+                <button
+                  key={link.href}
+                  onClick={() => { router.push(link.href); setMenuOpen(false) }}
+                  className={`mobile-link ${isActive(link.href) ? "active" : ""}`}
+                >
+                  {link.label}
+                </button>
+              ))}
+              <button
+                onClick={() => { toggleLang(); setMenuOpen(false) }}
+                className="mobile-link"
+              >
+                {lang === "nl" ? "🇬🇧 English" : "🇳🇱 Nederlands"}
+              </button>
+              <button onClick={handleLogout} className="mobile-link" style={{ color: '#e74c3c' }}>
+                {t("Uitloggen", "Logout")}
+              </button>
+            </div>
+          )}
         </div>
-
-        {/* Mobile menu */}
-        {menuOpen && (
-          <div className="md:hidden pb-4 space-y-1 border-t border-gray-100 pt-3">
-            {navLinks.map(link => (
-              <button
-                key={link.href}
-                onClick={() => { router.push(link.href); setMenuOpen(false) }}
-                className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all flex items-center gap-3 ${
-                  isActive(link.href)
-                    ? "bg-emerald-500 text-white"
-                    : "text-gray-600 hover:bg-emerald-50 hover:text-emerald-600"
-                }`}
-              >
-                <span>{link.icon}</span>
-                <span>{link.label}</span>
-              </button>
-            ))}
-            {/* Language toggle mobile */}
-            <button
-              onClick={() => { toggleLang(); setMenuOpen(false) }}
-              className="w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-emerald-50 flex items-center gap-3"
-            >
-              <span>{lang === "nl" ? "🇬🇧" : "🇳🇱"}</span>
-              <span>{lang === "nl" ? "Switch to English" : "Schakel naar Nederlands"}</span>
-            </button>
-            <button
-              onClick={handleLogout}
-              className="w-full text-left px-4 py-3 rounded-lg text-sm text-red-500 hover:bg-red-50 transition flex items-center gap-3"
-            >
-              <span>🚪</span>
-              <span>{t("Uitloggen", "Logout")}</span>
-            </button>
-          </div>
-        )}
-      </div>
-    </nav>
+      </nav>
+    </>
   )
 }
