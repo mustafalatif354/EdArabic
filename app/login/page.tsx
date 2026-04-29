@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaseClient"
 import { useLanguage } from "@/lib/LanguageContext"
 
+const BG_LETTERS = ['ا','ب','ت','ج','ح','س','ع','ك','ل','م']
+
 export default function LoginPage() {
   const router = useRouter()
   const { t, lang, toggleLang } = useLanguage()
@@ -14,6 +16,7 @@ export default function LoginPage() {
   const [username, setUsername] = useState("")
   const [isRegistering, setIsRegistering] = useState(false)
   const [message, setMessage] = useState("")
+  const [messageType, setMessageType] = useState<"error" | "success">("error")
 
   useEffect(() => {
     async function checkAuth() {
@@ -25,17 +28,18 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
-    setMessage("")
+    setLoading(true); setMessage("")
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {
+        setMessageType("error")
         setMessage(t("Login mislukt: ", "Login failed: ") + error.message)
       } else {
         router.push("/home")
       }
     } catch {
-      setMessage(t("Er is een fout opgetreden tijdens het inloggen", "An error occurred during login"))
+      setMessageType("error")
+      setMessage(t("Er is een fout opgetreden", "An error occurred"))
     } finally {
       setLoading(false)
     }
@@ -43,102 +47,141 @@ export default function LoginPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
-    setMessage("")
+    setLoading(true); setMessage("")
     try {
       const { data: authData, error: authError } = await supabase.auth.signUp({ email, password })
       if (authError) {
+        setMessageType("error")
         setMessage(t("Registratie mislukt: ", "Registration failed: ") + authError.message)
       } else if (authData.user) {
         const { error: profileError } = await supabase.from("user_profiles").insert({
-          user_id: authData.user.id,
-          username,
-          email,
-          created_at: new Date().toISOString(),
+          user_id: authData.user.id, username, email, created_at: new Date().toISOString(),
         })
         if (profileError) {
-          setMessage(t("Account aangemaakt, maar profiel kon niet worden opgeslagen.", "Account created, but profile could not be saved."))
+          setMessageType("error")
+          setMessage(t("Account aangemaakt, maar profiel niet opgeslagen.", "Account created, but profile not saved."))
         } else {
-          setMessage(t("Registratie succesvol! Je kunt nu inloggen.", "Registration successful! You can now log in."))
+          setMessageType("success")
+          setMessage(t("Registratie succesvol! Je kunt nu inloggen.", "Registration successful! You can log in."))
         }
         setEmail(""); setPassword(""); setUsername("")
         setTimeout(() => { setIsRegistering(false); setMessage("") }, 3000)
       }
     } catch {
-      setMessage(t("Er is een fout opgetreden tijdens de registratie", "An error occurred during registration"))
+      setMessageType("error")
+      setMessage(t("Er is een fout opgetreden", "An error occurred"))
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <main className="min-h-screen bg-emerald-50 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
+    <main className="luxe-bg min-h-screen flex items-center justify-center">
+      <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 2 }}>
+        {BG_LETTERS.map((letter, i) => (
+          <span key={i} className="floating-letter"
+            style={{
+              left: `${(i * 10) % 95}%`,
+              top: `${(i * 13) % 90 + 5}%`,
+              fontSize: `${3 + (i % 3)}rem`,
+              animationDelay: `${i * 1.5}s`,
+              animationDuration: `${22 + (i % 6)}s`,
+            }}>{letter}</span>
+        ))}
+      </div>
 
-        {/* Language toggle at top */}
-        <div className="flex justify-end mb-4">
-          <button onClick={toggleLang}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-gray-200 text-sm text-gray-500 hover:border-emerald-400 transition">
-            <span>{lang === "nl" ? "🇬🇧" : "🇳🇱"}</span>
-            <span>{lang === "nl" ? "English" : "Nederlands"}</span>
+      <div className="luxe-content w-full max-w-md mx-auto px-6">
+
+        <div className="flex justify-between items-center mb-10">
+          <div className="flex items-center gap-3">
+            <div style={{ width: 24, height: 24, transform: 'rotate(45deg)', background: 'linear-gradient(135deg, #d4af37, #b8941f)', boxShadow: '0 0 12px rgba(212,175,55,0.5)' }} />
+            <span className="font-display text-2xl" style={{ color: '#d4af37' }}>EdArabic</span>
+          </div>
+          <button onClick={toggleLang} className="btn-ghost text-xs px-3 py-2 rounded">
+            {lang === "nl" ? "EN" : "NL"}
           </button>
         </div>
 
-        <h1 className="text-2xl font-bold mb-6 text-center">
-          {isRegistering ? t("Registreren", "Register") : t("Inloggen", "Log in")}
-        </h1>
-
-        <form onSubmit={isRegistering ? handleRegister : handleLogin} className="space-y-4">
-          {isRegistering && (
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                {t("Gebruikersnaam (optioneel)", "Username (optional)")}
-              </label>
-              <input type="text" value={username} onChange={e => setUsername(e.target.value)}
-                placeholder={t("Kies een gebruikersnaam", "Choose a username")}
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-            </div>
-          )}
-          <div>
-            <label className="block text-sm font-medium mb-2">Email</label>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+        <div className="glass-card rounded-lg p-10 reveal">
+          <div className="text-center mb-8">
+            <p className="eyebrow mb-3">
+              {isRegistering ? t("Welkom", "Welcome") : t("Welkom terug", "Welcome back")}
+            </p>
+            <h1 className="font-display font-light" style={{ fontSize: '2.5rem', color: '#f5ecd7' }}>
+              {isRegistering
+                ? <>{t("Begin je", "Begin your")} <span className="italic gold-shimmer">{t("reis", "journey")}</span></>
+                : <>{t("Ga", "Continue your")} <span className="italic gold-shimmer">{t("verder", "journey")}</span></>
+              }
+            </h1>
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              {t("Wachtwoord", "Password")}
-            </label>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6}
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+
+          <div className="ornament mb-8">
+            <span className="ornament-dot" />
+          </div>
+
+          <form onSubmit={isRegistering ? handleRegister : handleLogin} className="space-y-5">
             {isRegistering && (
-              <p className="text-xs text-gray-500 mt-1">{t("Minimaal 6 karakters", "At least 6 characters")}</p>
+              <div>
+                <label className="eyebrow block mb-2" style={{ color: 'rgba(245,236,215,0.6)' }}>
+                  {t("Gebruikersnaam", "Username")}
+                </label>
+                <input type="text" value={username} onChange={e => setUsername(e.target.value)}
+                  placeholder={t("Optioneel", "Optional")}
+                  className="luxe-input w-full px-4 py-3 rounded" />
+              </div>
             )}
-          </div>
-
-          {message && (
-            <div className={`p-3 rounded-lg text-sm ${message.includes("succesvol") || message.includes("successful") ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-              {message}
+            <div>
+              <label className="eyebrow block mb-2" style={{ color: 'rgba(245,236,215,0.6)' }}>Email</label>
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
+                placeholder="you@example.com"
+                className="luxe-input w-full px-4 py-3 rounded" />
             </div>
-          )}
+            <div>
+              <label className="eyebrow block mb-2" style={{ color: 'rgba(245,236,215,0.6)' }}>
+                {t("Wachtwoord", "Password")}
+              </label>
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6}
+                className="luxe-input w-full px-4 py-3 rounded" />
+              {isRegistering && (
+                <p className="text-xs mt-2" style={{ color: 'rgba(245,236,215,0.4)' }}>
+                  {t("Minimaal 6 karakters", "At least 6 characters")}
+                </p>
+              )}
+            </div>
 
-          <button type="submit" disabled={loading}
-            className="w-full bg-emerald-500 text-white py-2 px-4 rounded-lg hover:bg-emerald-600 disabled:opacity-50">
-            {loading
-              ? (isRegistering ? t("Registreren...", "Registering...") : t("Inloggen...", "Logging in..."))
-              : (isRegistering ? t("Registreren", "Register") : t("Inloggen", "Log in"))
-            }
-          </button>
-        </form>
+            {message && (
+              <div className="glass-card-sm rounded p-3 text-sm" style={{
+                borderColor: messageType === "error" ? 'rgba(231,76,60,0.3)' : 'rgba(20,163,115,0.3)',
+                background: messageType === "error" ? 'rgba(231,76,60,0.05)' : 'rgba(20,163,115,0.05)',
+                color: messageType === "error" ? '#e74c3c' : '#14a373',
+              }}>
+                {message}
+              </div>
+            )}
 
-        <div className="mt-6 text-center">
-          <button onClick={() => { setIsRegistering(!isRegistering); setMessage(""); setEmail(""); setPassword(""); setUsername("") }}
-            className="text-emerald-600 hover:text-emerald-700 text-sm">
-            {isRegistering
-              ? t("Al een account? Inloggen", "Already have an account? Log in")
-              : t("Nog geen account? Registreren", "No account yet? Register")
-            }
-          </button>
+            <button type="submit" disabled={loading}
+              className="btn-gold w-full py-4 rounded tracking-wide">
+              {loading
+                ? (isRegistering ? t("Registreren...", "Registering...") : t("Inloggen...", "Logging in..."))
+                : (isRegistering ? t("Registreer", "Register") : t("Log in", "Log in"))
+              }
+            </button>
+          </form>
+
+          <div className="mt-8 text-center">
+            <button onClick={() => { setIsRegistering(!isRegistering); setMessage(""); setEmail(""); setPassword(""); setUsername("") }}
+              className="eyebrow hover:text-yellow-400 transition" style={{ color: 'rgba(212,175,55,0.7)' }}>
+              {isRegistering
+                ? t("← Al een account? Inloggen", "← Already have an account? Log in")
+                : t("Nog geen account? Registreer →", "No account yet? Register →")
+              }
+            </button>
+          </div>
         </div>
+
+        <p className="text-center mt-8 text-xs" style={{ color: 'rgba(245,236,215,0.3)', fontFamily: 'Cormorant Garamond', fontStyle: 'italic' }}>
+          {t("Met zorg gemaakt voor de toegewijde leerling", "Crafted with care for the dedicated learner")}
+        </p>
       </div>
     </main>
   )

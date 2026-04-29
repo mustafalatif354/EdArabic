@@ -11,10 +11,10 @@ interface Word {
   definition_nl: string; definition_en: string; difficulty: number
 }
 
-const levelConfig: Record<string, { label_nl: string; label_en: string; icon: string; color: string; border: string; difficulty: number }> = {
-  beginner:     { label_nl: "Beginner",    label_en: "Beginner",     icon: "🌱", color: "from-green-400 to-emerald-600",  border: "border-green-200",  difficulty: 1 },
-  intermediate: { label_nl: "Gevorderd",   label_en: "Intermediate", icon: "📗", color: "from-blue-400 to-cyan-600",      border: "border-blue-200",   difficulty: 2 },
-  advanced:     { label_nl: "Geavanceerd", label_en: "Advanced",     icon: "🔥", color: "from-orange-400 to-red-600",     border: "border-orange-200", difficulty: 3 },
+const levelConfig: Record<string, { label_nl: string; label_en: string; glyph: string; accent: string; difficulty: number; levelLabel: string }> = {
+  beginner:     { label_nl: "Beginner",    label_en: "Beginner",     glyph: "ا", accent: "#14a373", difficulty: 1, levelLabel: "A1" },
+  intermediate: { label_nl: "Gevorderd",   label_en: "Intermediate", glyph: "ب", accent: "#d4af37", difficulty: 2, levelLabel: "A2 · B1" },
+  advanced:     { label_nl: "Geavanceerd", label_en: "Advanced",     glyph: "ج", accent: "#b8941f", difficulty: 3, levelLabel: "B1 · B2" },
 }
 
 export default function VocabularyLevelPage() {
@@ -42,17 +42,17 @@ export default function VocabularyLevelPage() {
   }, [user, config])
 
   if (!config) return (
-    <main className="min-h-screen bg-emerald-50 flex items-center justify-center">
+    <main className="luxe-bg flex items-center justify-center">
       <div className="text-center">
-        <p className="text-xl font-bold mb-4">{t("Level niet gevonden", "Level not found")}</p>
-        <button onClick={() => router.push("/vocabulary")} className="bg-emerald-500 text-white px-4 py-2 rounded-lg">{t("Terug", "Back")}</button>
+        <p className="font-display text-xl mb-4" style={{ color: '#d4af37' }}>{t("Level niet gevonden", "Level not found")}</p>
+        <button onClick={() => router.push("/vocabulary")} className="btn-ghost px-6 py-2 rounded">{t("Terug", "Back")}</button>
       </div>
     </main>
   )
 
   if (authLoading || dataLoading) return (
-    <main className="min-h-screen bg-emerald-50 flex items-center justify-center">
-      <p className="text-gray-600">{t("Bezig met laden...", "Loading...")}</p>
+    <main className="luxe-bg flex items-center justify-center">
+      <p className="font-display text-xl" style={{ color: '#d4af37' }}>{t("Bezig met laden...", "Loading...")}</p>
     </main>
   )
 
@@ -64,56 +64,67 @@ export default function VocabularyLevelPage() {
   )
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-emerald-50 via-blue-50 to-purple-50">
-      <header className="bg-white shadow-sm">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-6">
-            <button onClick={() => router.push("/vocabulary")} className="flex items-center text-emerald-600 hover:text-emerald-700">
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              {t("Woordenschat", "Vocabulary")}
-            </button>
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-gray-900">{config.icon} {lang === "nl" ? config.label_nl : config.label_en}</h1>
+    <main className="luxe-bg">
+      <div className="luxe-content max-w-6xl mx-auto px-6 lg:px-10 py-12">
+
+        <div className="mb-10 reveal">
+          <button onClick={() => router.push("/vocabulary")}
+            className="eyebrow mb-6 hover:text-yellow-400 transition" style={{ color: 'rgba(212,175,55,0.6)' }}>
+            ← {t("Woordenschat", "Vocabulary")}
+          </button>
+
+          <div className="flex items-start gap-6 mb-4">
+            <span className="arabic-display" style={{ fontSize: '4rem', color: config.accent, textShadow: `0 0 30px ${config.accent}60` }}>
+              {config.glyph}
+            </span>
+            <div>
+              <p className="eyebrow mb-2" style={{ color: config.accent }}>{config.levelLabel}</p>
+              <h1 className="font-display font-light" style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', color: '#f5ecd7' }}>
+                {lang === "nl" ? config.label_nl : config.label_en}
+              </h1>
             </div>
-            <div className="w-24" />
           </div>
         </div>
-      </header>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col sm:flex-row gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row gap-3 mb-8 reveal" style={{ animationDelay: '0.1s' }}>
           <input type="text" placeholder={t("Zoek een woord...", "Search a word...")} value={search}
             onChange={e => setSearch(e.target.value)}
-            className="flex-1 px-4 py-3 rounded-xl border border-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white" />
+            className="luxe-input flex-1 px-5 py-3 rounded text-sm" />
           <button onClick={() => setShowArabic(!showArabic)}
-            className={`px-6 py-3 rounded-xl font-medium transition border ${showArabic ? "bg-emerald-500 text-white border-emerald-500" : "bg-white text-gray-600 border-gray-200"}`}>
+            className={showArabic ? "btn-gold px-6 py-3 rounded text-sm" : "btn-ghost px-6 py-3 rounded text-sm"}>
             {showArabic ? t("Verberg Arabisch", "Hide Arabic") : t("Toon Arabisch", "Show Arabic")}
           </button>
           <button onClick={() => router.push(`/vocabulary/exercise?level=${level}`)}
-            className={`px-6 py-3 rounded-xl font-medium text-white bg-gradient-to-r ${config.color} hover:opacity-90 transition`}>
-            🧠 {t("Oefen dit niveau", "Practise this level")}
+            className="btn-emerald px-6 py-3 rounded text-sm font-medium">
+            ✦ {t("Oefen", "Practise")}
           </button>
         </div>
 
-        <p className="text-sm text-gray-500 mb-4">{filtered.length} {t("woorden", "words")}</p>
+        <p className="text-xs eyebrow mb-6" style={{ color: 'rgba(245,236,215,0.5)' }}>
+          {filtered.length} {t("woorden", "words")}
+        </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map(word => (
-            <div key={word.id} className={`bg-white rounded-2xl shadow-md p-5 border ${config.border} hover:shadow-lg transition-shadow`}>
+          {filtered.map((word, i) => (
+            <div key={word.id}
+              className="glass-card-sm rounded-lg p-5 reveal"
+              style={{ animationDelay: `${Math.min(i * 0.02, 0.6)}s` }}>
               {showArabic && (
-                <div className="text-4xl font-bold text-gray-800 text-right mb-2" dir="rtl">{word.arabic}</div>
-              )}
-              <div className="text-sm text-emerald-600 font-mono mb-3">/{word.transliteration}/</div>
-              <div className="space-y-1">
-                <div className="flex items-start gap-2">
-                  <span className="text-xs font-medium text-gray-400 w-4 shrink-0">NL</span>
-                  <span className="text-gray-700 text-sm">{word.definition_nl}</span>
+                <div className="arabic-display text-right mb-3" dir="rtl" style={{ fontSize: '2.5rem' }}>
+                  {word.arabic}
                 </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-xs font-medium text-gray-400 w-4 shrink-0">EN</span>
-                  <span className="text-gray-700 text-sm">{word.definition_en}</span>
+              )}
+              <div className="text-xs font-mono mb-3" style={{ color: config.accent }}>
+                /{word.transliteration}/
+              </div>
+              <div className="space-y-1.5 text-sm">
+                <div className="flex gap-2">
+                  <span className="text-xs w-5 shrink-0 mt-0.5" style={{ color: 'rgba(245,236,215,0.4)' }}>NL</span>
+                  <span style={{ color: 'rgba(245,236,215,0.85)' }}>{word.definition_nl}</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-xs w-5 shrink-0 mt-0.5" style={{ color: 'rgba(245,236,215,0.4)' }}>EN</span>
+                  <span style={{ color: 'rgba(245,236,215,0.85)' }}>{word.definition_en}</span>
                 </div>
               </div>
             </div>
@@ -121,9 +132,11 @@ export default function VocabularyLevelPage() {
         </div>
 
         {filtered.length === 0 && (
-          <div className="text-center py-16 text-gray-400">
-            <div className="text-5xl mb-4">🔍</div>
-            <p>{t("Geen woorden gevonden", "No words found")}</p>
+          <div className="text-center py-20">
+            <div className="text-5xl mb-4" style={{ color: 'rgba(212,175,55,0.4)' }}>⟢</div>
+            <p className="font-display text-lg" style={{ color: 'rgba(245,236,215,0.5)' }}>
+              {t("Geen woorden gevonden", "No words found")}
+            </p>
           </div>
         )}
       </div>

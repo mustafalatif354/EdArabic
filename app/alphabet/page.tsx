@@ -7,6 +7,8 @@ import { useLanguage } from "@/lib/LanguageContext"
 import { getAllLessons, Lesson } from "@/lib/lessonsData"
 import { ProgressManager, ProgressData } from "@/lib/progress"
 
+const BG_LETTERS = ['ا','ب','ت','ج','ح','س','ع','ك','ل','م','ن','ه']
+
 export default function AlphabetPage() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
@@ -40,44 +42,51 @@ export default function AlphabetPage() {
 
   if (authLoading || dataLoading) {
     return (
-      <main className="min-h-screen bg-emerald-50 flex items-center justify-center">
-        <p className="text-gray-600">{t("Bezig met laden...", "Loading...")}</p>
+      <main className="luxe-bg flex items-center justify-center">
+        <p className="font-display text-xl" style={{ color: '#d4af37' }}>{t("Bezig met laden...", "Loading...")}</p>
       </main>
     )
   }
 
-  const renderLessonCard = (lesson: Lesson) => {
+  const renderLessonCard = (lesson: Lesson, i: number) => {
     const progress = getLessonProgress(lesson.id)
     const unlocked = isLessonUnlocked(lesson.id)
 
     return (
-      <div key={lesson.id} onClick={() => { if (unlocked) router.push(`/lessons/${lesson.id}`) }}
-        className={`group relative bg-white rounded-3xl p-6 shadow-lg transition-all duration-300 overflow-hidden ${
-          unlocked ? "hover:shadow-2xl hover:-translate-y-2 cursor-pointer" : "opacity-50 cursor-not-allowed"
-        }`}>
+      <div
+        key={lesson.id}
+        onClick={() => { if (unlocked) router.push(`/lessons/${lesson.id}`) }}
+        className={`tilt-card glass-card rounded-lg p-8 reveal ${unlocked ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+        style={{ animationDelay: `${i * 0.05}s`, opacity: unlocked ? 1 : 0.5 }}
+      >
         {!unlocked && (
-          <div className="absolute inset-0 bg-gray-900/10 backdrop-blur-sm z-20 flex items-center justify-center rounded-3xl">
+          <div className="absolute inset-0 flex items-center justify-center z-20 rounded-lg" style={{ background: 'rgba(10,10,15,0.7)', backdropFilter: 'blur(4px)' }}>
             <div className="text-center">
-              <div className="text-3xl mb-1">🔒</div>
-              <div className="text-xs font-bold text-gray-700">
-                {lesson.id === 2
-                  ? t("Voltooi les 1 eerst", "Complete lesson 1 first")
-                  : t("Voltooi de vorige les", "Complete the previous lesson")}
+              <div className="text-3xl mb-2" style={{ color: '#d4af37' }}>⟢</div>
+              <div className="eyebrow" style={{ color: 'rgba(212,175,55,0.7)' }}>
+                {lesson.id === 2 ? t("Voltooi les 1", "Complete lesson 1") : t("Vergrendeld", "Locked")}
               </div>
             </div>
           </div>
         )}
-        <div className={`absolute inset-0 bg-gradient-to-br ${lesson.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-3xl`} />
-        <div className="relative z-10 text-center">
-          <div className="text-4xl mb-3 group-hover:scale-110 transition-transform duration-300">{lesson.icon}</div>
-          <div className={`w-12 h-1 bg-gradient-to-r ${lesson.color} mx-auto rounded-full mb-4`} />
-          <h3 className="text-base font-bold text-gray-900 mb-1 group-hover:text-emerald-600 transition-colors">
+
+        <div className="text-center">
+          <div className="mb-4">
+            <span className="arabic-display" style={{ fontSize: '3.5rem' }}>
+              {lesson.icon}
+            </span>
+          </div>
+          <div className="ornament mb-4 mx-auto" style={{ maxWidth: 80 }}>
+            <span className="ornament-dot" />
+          </div>
+          <h3 className="font-display text-xl mb-3" style={{ color: '#f5ecd7' }}>
             {lang === "nl" ? lesson.title_nl : lesson.title_en}
           </h3>
-          {progress.completed
-            ? <span className="text-emerald-600 text-sm font-medium">✓ {t("Voltooid", "Completed")}</span>
-            : <span className="text-gray-400 text-xs">{t("Nog niet gestart", "Not started")}</span>
-          }
+          {progress.completed ? (
+            <span className="eyebrow" style={{ color: '#14a373' }}>✓ {t("Voltooid", "Completed")}</span>
+          ) : (
+            <span className="eyebrow" style={{ color: 'rgba(245,236,215,0.4)' }}>{t("Nog te doen", "Not started")}</span>
+          )}
         </div>
       </div>
     )
@@ -88,63 +97,112 @@ export default function AlphabetPage() {
   const canTakeTest = lesson2Completed && !comprehensiveCompleted
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-emerald-50 via-blue-50 to-purple-50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="mb-10">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">🔤 {t("Arabisch Alfabet", "Arabic Alphabet")}</h1>
-          <p className="text-gray-500">{t("Leer alle 28 letters", "Learn all 28 letters")}</p>
+    <main className="luxe-bg">
+      <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 2 }}>
+        {BG_LETTERS.map((letter, i) => (
+          <span key={i} className="floating-letter"
+            style={{
+              left: `${(i * 9) % 95}%`,
+              top: `${(i * 14) % 90 + 5}%`,
+              fontSize: `${3 + (i % 4)}rem`,
+              animationDelay: `${i * 1.8}s`,
+              animationDuration: `${22 + (i % 6)}s`,
+            }}>{letter}</span>
+        ))}
+      </div>
+
+      <div className="luxe-content max-w-6xl mx-auto px-6 lg:px-10 py-16">
+
+        {/* Header */}
+        <div className="mb-16 reveal">
+          <p className="eyebrow mb-4">{t("Het fundament", "The foundation")}</p>
+          <h1 className="font-display font-light mb-4" style={{ fontSize: 'clamp(2.5rem, 5vw, 4rem)' }}>
+            {t("Arabisch", "Arabic")}{' '}
+            <span className="italic gold-shimmer">{t("alfabet", "alphabet")}</span>
+          </h1>
+          <p className="text-lg" style={{ color: 'rgba(245,236,215,0.6)', fontFamily: 'Cormorant Garamond' }}>
+            {t("Achtentwintig letters — één reis", "Twenty-eight letters — one journey")}
+          </p>
         </div>
 
-        <div className="mb-8">
-          <h2 className="text-xl font-bold text-gray-700 mb-4">{t("Basis lessen", "Foundation lessons")}</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {lessons.slice(0, 2).map(renderLessonCard)}
+        {/* Foundation lessons */}
+        <div className="mb-20 reveal" style={{ animationDelay: '0.1s' }}>
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="font-display text-2xl" style={{ color: '#f5ecd7' }}>
+              {t("Basis lessen", "Foundation lessons")}
+            </h2>
+            <div className="gold-divider flex-1 mx-6" />
+            <span className="eyebrow">I & II</span>
+          </div>
+
+          <div className="scene-3d grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {lessons.slice(0, 2).map((l, i) => renderLessonCard(l, i))}
 
             {/* Comprehensive test card */}
-            <div onClick={() => { if (canTakeTest || comprehensiveCompleted) router.push("/lessons/99/test") }}
-              className={`group relative bg-white rounded-3xl p-6 shadow-lg transition-all duration-300 overflow-hidden border-2 border-blue-100 ${
-                canTakeTest || comprehensiveCompleted ? "hover:shadow-2xl hover:-translate-y-2 cursor-pointer" : "opacity-50 cursor-not-allowed"
-              }`}>
+            <div
+              onClick={() => { if (canTakeTest || comprehensiveCompleted) router.push("/lessons/99/test") }}
+              className={`tilt-card glass-card rounded-lg p-8 reveal ${canTakeTest || comprehensiveCompleted ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+              style={{ animationDelay: '0.1s', borderColor: 'rgba(20, 163, 115, 0.3)', opacity: lesson2Completed ? 1 : 0.5 }}
+            >
               {!lesson2Completed && (
-                <div className="absolute inset-0 bg-gray-900/10 backdrop-blur-sm z-20 flex items-center justify-center rounded-3xl">
+                <div className="absolute inset-0 flex items-center justify-center z-20 rounded-lg" style={{ background: 'rgba(10,10,15,0.7)', backdropFilter: 'blur(4px)' }}>
                   <div className="text-center">
-                    <div className="text-3xl mb-1">🔒</div>
-                    <div className="text-xs font-bold text-gray-700">{t("Voltooi les 2 eerst", "Complete lesson 2 first")}</div>
+                    <div className="text-3xl mb-2" style={{ color: '#d4af37' }}>⟢</div>
+                    <div className="eyebrow" style={{ color: 'rgba(212,175,55,0.7)' }}>{t("Voltooi les 2", "Complete lesson 2")}</div>
                   </div>
                 </div>
               )}
-              <div className="relative z-10 text-center">
-                <div className="text-4xl mb-3 group-hover:scale-110 transition-transform duration-300">🎯</div>
-                <div className="w-12 h-1 bg-gradient-to-r from-blue-400 to-purple-500 mx-auto rounded-full mb-4" />
-                <h3 className="text-base font-bold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">
-                  {t("Comprehensieve Test", "Comprehensive Test")}
+              <div className="text-center">
+                <div className="mb-4">
+                  <span className="arabic-display" style={{ fontSize: '3.5rem', color: '#14a373', textShadow: '0 0 30px rgba(20,163,115,0.4)' }}>✦</span>
+                </div>
+                <div className="ornament mb-4 mx-auto" style={{ maxWidth: 80 }}>
+                  <span className="ornament-dot" style={{ background: '#14a373', boxShadow: '0 0 12px rgba(20,163,115,0.7)' }}/>
+                </div>
+                <h3 className="font-display text-xl mb-2" style={{ color: '#f5ecd7' }}>
+                  {t("Grote Test", "Grand Test")}
                 </h3>
-                <p className="text-xs text-gray-400 mb-3">{t("Alle 28 letters", "All 28 letters")}</p>
-                {comprehensiveCompleted
-                  ? <span className="text-emerald-600 text-sm font-medium">✓ {t("Voltooid", "Completed")}</span>
-                  : canTakeTest
-                    ? <span className="text-blue-600 text-xs font-medium">{t("Min. 80% nodig", "Min. 80% required")}</span>
-                    : <span className="text-gray-400 text-xs">{t("Voltooi les 2 eerst", "Complete lesson 2 first")}</span>
-                }
+                <p className="text-xs mb-3" style={{ color: 'rgba(245,236,215,0.5)' }}>{t("Alle 28 letters", "All 28 letters")}</p>
+                {comprehensiveCompleted ? (
+                  <span className="eyebrow" style={{ color: '#14a373' }}>✓ {t("Voltooid", "Completed")}</span>
+                ) : canTakeTest ? (
+                  <span className="eyebrow" style={{ color: '#d4af37' }}>{t("Min. 80%", "Min. 80%")}</span>
+                ) : (
+                  <span className="eyebrow" style={{ color: 'rgba(245,236,215,0.4)' }}>{t("Vergrendeld", "Locked")}</span>
+                )}
               </div>
             </div>
           </div>
         </div>
 
-        <div>
-          <h2 className="text-xl font-bold text-gray-700 mb-4">{t("Gevorderde lessen", "Advanced lessons")}</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {lessons.slice(2).map(renderLessonCard)}
+        {/* Advanced lessons */}
+        <div className="mb-20 reveal" style={{ animationDelay: '0.2s' }}>
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="font-display text-2xl" style={{ color: '#f5ecd7' }}>
+              {t("Gevorderde lessen", "Advanced lessons")}
+            </h2>
+            <div className="gold-divider flex-1 mx-6" />
+            <span className="eyebrow">III+</span>
+          </div>
+
+          <div className="scene-3d grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {lessons.slice(2).map((l, i) => renderLessonCard(l, i + 3))}
           </div>
         </div>
 
-        <div className="mt-10 bg-white rounded-3xl shadow-lg p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+        {/* Practice CTA */}
+        <div className="glass-card rounded-lg p-10 reveal flex flex-col sm:flex-row items-center justify-between gap-6" style={{ animationDelay: '0.3s' }}>
           <div>
-            <h3 className="text-xl font-bold text-gray-900 mb-1">{t("Letter oefeningen", "Letter exercises")}</h3>
-            <p className="text-gray-500 text-sm">{t("Oefen individuele letters los van de lessen", "Practise individual letters outside of lessons")}</p>
+            <p className="eyebrow mb-2">{t("Vrije oefening", "Free practice")}</p>
+            <h3 className="font-display text-2xl mb-2" style={{ color: '#f5ecd7' }}>
+              {t("Oefen naar eigen tempo", "Practice at your own pace")}
+            </h3>
+            <p className="text-sm" style={{ color: 'rgba(245,236,215,0.6)' }}>
+              {t("Oefen individuele letters los van de lessen", "Practise individual letters outside of the lessons")}
+            </p>
           </div>
           <button onClick={() => router.push("/exercises/letters")}
-            className="shrink-0 bg-gradient-to-r from-emerald-500 to-blue-500 text-white px-8 py-3 rounded-xl font-semibold hover:from-emerald-600 hover:to-blue-600 transition">
+            className="btn-gold shrink-0 px-8 py-3 rounded font-medium tracking-wide">
             {t("Ga naar oefeningen", "Go to exercises")} →
           </button>
         </div>

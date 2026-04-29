@@ -9,7 +9,7 @@ import { LevelingSystem } from "@/lib/leveling"
 
 interface Ayah { number: number; numberInSurah: number; text: string; translation?: string }
 interface Surah { number: number; name: string; englishName: string; englishNameTranslation: string; numberOfAyahs: number; ayahs: Ayah[] }
-interface ComprehensionQuestion { question: string; options: string[]; correct: number }
+interface CQuestion { question: string; options: string[]; correct: number }
 
 type Phase = "read" | "listen" | "quiz" | "results"
 
@@ -19,9 +19,8 @@ const RECITERS = [
   { id: "ar.minshawi",       name: "Mohamed Siddiq al-Minshawi" },
 ]
 
-function generateQuestions(surah: Surah, translations: Ayah[]): ComprehensionQuestion[] {
-  const questions: ComprehensionQuestion[] = []
-
+function generateQuestions(surah: Surah, translations: Ayah[]): CQuestion[] {
+  const questions: CQuestion[] = []
   const q1opts = [surah.numberOfAyahs.toString(), (surah.numberOfAyahs + 3).toString(), (surah.numberOfAyahs - 2).toString(), (surah.numberOfAyahs + 7).toString()].sort(() => Math.random() - 0.5)
   questions.push({ question: `How many ayahs does Surah ${surah.englishName} have?`, options: q1opts, correct: q1opts.indexOf(surah.numberOfAyahs.toString()) })
 
@@ -55,7 +54,7 @@ export default function QuranSurahPage() {
   const [reciter, setReciter] = useState(RECITERS[0].id)
   const [currentAyah, setCurrentAyah] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
-  const [questions, setQuestions] = useState<ComprehensionQuestion[]>([])
+  const [questions, setQuestions] = useState<CQuestion[]>([])
   const [currentQ, setCurrentQ] = useState(0)
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
   const [quizResults, setQuizResults] = useState<boolean[]>([])
@@ -106,66 +105,85 @@ export default function QuranSurahPage() {
     const correct = optionIndex === questions[currentQ].correct
     const newResults = [...quizResults, correct]
     setTimeout(() => {
-      if (currentQ + 1 < questions.length) { setCurrentQ(currentQ + 1); setSelectedAnswer(null); setQuizResults(newResults) }
-      else {
+      if (currentQ + 1 < questions.length) {
+        setCurrentQ(currentQ + 1); setSelectedAnswer(null); setQuizResults(newResults)
+      } else {
         const score = Math.round((newResults.filter(Boolean).length / questions.length) * 100)
         const xp = LevelingSystem.calculateXPForScore(score)
         setXpEarned(xp); setQuizResults(newResults)
-        supabase.from("quran_progress").upsert({ user_id: user!.id, surah_id: surahId, completed: true, score, xp_earned: xp, completed_at: new Date().toISOString() }, { onConflict: "user_id,surah_id" })
+        supabase.from("quran_progress").upsert({
+          user_id: user!.id, surah_id: surahId, completed: true, score, xp_earned: xp, completed_at: new Date().toISOString()
+        }, { onConflict: "user_id,surah_id" })
         setPhase("results")
       }
     }, 1000)
   }
 
   if (authLoading || dataLoading) return (
-    <main className="min-h-screen bg-emerald-50 flex items-center justify-center">
-      <p className="text-gray-600">{t("Bezig met laden...", "Loading...")}</p>
+    <main className="luxe-bg flex items-center justify-center">
+      <p className="font-display text-xl" style={{ color: '#d4af37' }}>{t("Bezig met laden...", "Loading...")}</p>
     </main>
   )
 
   if (error || !surah) return (
-    <main className="min-h-screen bg-emerald-50 flex items-center justify-center">
+    <main className="luxe-bg flex items-center justify-center">
       <div className="text-center">
-        <p className="text-red-600 mb-4">{error || t("Soera niet gevonden", "Surah not found")}</p>
-        <button onClick={() => router.push("/quran")} className="bg-emerald-500 text-white px-4 py-2 rounded-lg">{t("Terug", "Back")}</button>
+        <p className="text-lg mb-4" style={{ color: '#e74c3c' }}>{error || t("Soera niet gevonden", "Surah not found")}</p>
+        <button onClick={() => router.push("/quran")} className="btn-ghost px-6 py-2 rounded">{t("Terug", "Back")}</button>
       </div>
     </main>
   )
 
-  // ── RESULTS ───────────────────────────────────────────────
+  // RESULTS
   if (phase === "results") {
     const score = Math.round((quizResults.filter(Boolean).length / questions.length) * 100)
     return (
-      <main className="min-h-screen bg-gradient-to-br from-emerald-50 via-blue-50 to-purple-50">
-        <div className="max-w-3xl mx-auto px-4 py-10">
-          <div className="bg-white rounded-3xl shadow-xl p-10 text-center mb-6">
-            <div className="text-6xl mb-4">{score >= 80 ? "🏆" : score >= 60 ? "👍" : "💪"}</div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-1">Surah {surah.englishName}</h1>
-            <p className="text-gray-400 mb-4">{t("Begripsresultaten", "Comprehension Results")}</p>
-            <div className="text-7xl font-bold bg-gradient-to-r from-emerald-500 to-blue-500 bg-clip-text text-transparent my-4">{score}%</div>
-            <p className="text-gray-500 mb-2">{quizResults.filter(Boolean).length} / {questions.length} {t("correct", "correct")}</p>
-            <div className="inline-block bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full font-semibold text-sm mb-6">+{xpEarned} XP {t("verdiend", "earned")}</div>
-            <div className="text-left space-y-3 mt-4">
+      <main className="luxe-bg">
+        <div className="luxe-content max-w-3xl mx-auto px-6 lg:px-10 py-16">
+          <div className="glass-card rounded-lg p-12 text-center mb-8 reveal">
+            <div className="mb-6">
+              <span className="arabic-display" style={{ fontSize: '5rem' }}>
+                {score >= 80 ? "✦" : score >= 60 ? "❋" : "⟢"}
+              </span>
+            </div>
+            <p className="eyebrow mb-2">Surah {surah.englishName}</p>
+            <p className="font-display text-lg italic mb-4" style={{ color: 'rgba(245,236,215,0.5)' }}>
+              {t("Begripsresultaten", "Comprehension Results")}
+            </p>
+            <div className="font-display gold-shimmer mb-4" style={{ fontSize: '6rem', lineHeight: 1 }}>{score}%</div>
+            <p className="text-lg mb-8" style={{ color: 'rgba(245,236,215,0.7)' }}>
+              {quizResults.filter(Boolean).length} / {questions.length} {t("correct", "correct")}
+            </p>
+            <div className="inline-block glass-card-sm rounded-full px-6 py-2 mb-8">
+              <span className="eyebrow" style={{ color: '#d4af37' }}>+{xpEarned} XP {t("verdiend", "earned")}</span>
+            </div>
+
+            <div className="text-left space-y-3 mt-6">
               {questions.map((q, i) => (
-                <div key={i} className={`p-4 rounded-xl border ${quizResults[i] ? "border-emerald-200 bg-emerald-50" : "border-red-200 bg-red-50"}`}>
-                  <div className="flex gap-3 items-start">
-                    <span className={`text-lg ${quizResults[i] ? "text-emerald-500" : "text-red-500"}`}>{quizResults[i] ? "✓" : "✗"}</span>
+                <div key={i} className="glass-card-sm rounded-lg p-4" style={{
+                  borderColor: quizResults[i] ? 'rgba(20,163,115,0.3)' : 'rgba(231,76,60,0.3)',
+                  background: quizResults[i] ? 'rgba(20,163,115,0.05)' : 'rgba(231,76,60,0.05)',
+                }}>
+                  <div className="flex gap-3">
+                    <span className="text-lg" style={{ color: quizResults[i] ? '#14a373' : '#e74c3c' }}>
+                      {quizResults[i] ? "✓" : "✗"}
+                    </span>
                     <div>
-                      <p className="font-medium text-gray-800 text-sm">{q.question}</p>
-                      <p className="text-sm text-emerald-700 mt-1">{t("Correct", "Correct")}: {q.options[q.correct]}</p>
+                      <p className="text-sm mb-1" style={{ color: '#f5ecd7' }}>{q.question}</p>
+                      <p className="text-xs eyebrow" style={{ color: '#14a373' }}>{q.options[q.correct]}</p>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row gap-4">
+
+          <div className="flex flex-col sm:flex-row gap-3">
             <button onClick={() => { setPhase("read"); setCurrentQ(0); setQuizResults([]); setSelectedAnswer(null) }}
-              className="flex-1 bg-gradient-to-r from-emerald-500 to-blue-500 text-white py-4 rounded-xl font-semibold">
-              🔁 {t("Opnieuw", "Try again")}
+              className="btn-gold flex-1 px-6 py-4 rounded tracking-wide">
+              ↻ {t("Opnieuw", "Try again")}
             </button>
-            <button onClick={() => router.push("/quran")}
-              className="flex-1 bg-white border-2 border-gray-200 text-gray-700 py-4 rounded-xl font-semibold hover:border-emerald-400 transition">
+            <button onClick={() => router.push("/quran")} className="btn-ghost flex-1 px-6 py-4 rounded tracking-wide">
               {t("Alle soera's", "All surahs")}
             </button>
           </div>
@@ -174,38 +192,39 @@ export default function QuranSurahPage() {
     )
   }
 
-  // ── QUIZ ──────────────────────────────────────────────────
+  // QUIZ
   if (phase === "quiz") {
     const q = questions[currentQ]
     if (!q) return null
     return (
-      <main className="min-h-screen bg-gradient-to-br from-emerald-50 via-blue-50 to-purple-50">
-        <header className="bg-white shadow-sm">
-          <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-            <button onClick={() => setPhase("read")} className="text-gray-500 hover:text-gray-700 text-sm">← {t("Terug", "Back")}</button>
-            <div className="flex items-center gap-3 flex-1 mx-6">
-              <div className="flex-1 bg-gray-200 rounded-full h-2">
-                <div className="h-2 rounded-full bg-gradient-to-r from-emerald-400 to-blue-500 transition-all" style={{ width: `${(currentQ / questions.length) * 100}%` }} />
-              </div>
-              <span className="text-sm text-gray-500">{currentQ + 1}/{questions.length}</span>
+      <main className="luxe-bg">
+        <div className="luxe-content max-w-3xl mx-auto px-6 lg:px-10 py-10">
+          <div className="flex items-center gap-4 mb-10">
+            <button onClick={() => setPhase("read")} className="eyebrow" style={{ color: 'rgba(212,175,55,0.6)' }}>
+              ← {t("Terug", "Back")}
+            </button>
+            <div className="luxe-bar flex-1">
+              <div className="luxe-bar-fill" style={{ width: `${(currentQ / questions.length) * 100}%` }} />
             </div>
+            <span className="eyebrow" style={{ color: 'rgba(245,236,215,0.5)' }}>{currentQ + 1}/{questions.length}</span>
           </div>
-        </header>
-        <div className="max-w-3xl mx-auto px-4 py-10">
-          <div className="bg-white rounded-3xl shadow-xl p-8">
-            <p className="text-gray-500 text-sm mb-3 text-center">Surah {surah.englishName} — {t("Vraag", "Question")} {currentQ + 1}</p>
-            <h2 className="text-xl font-bold text-gray-900 text-center mb-8">{q.question}</h2>
-            <div className="grid grid-cols-1 gap-4">
+
+          <div className="glass-card rounded-lg p-10">
+            <p className="eyebrow text-center mb-4" style={{ color: 'rgba(245,236,215,0.5)' }}>
+              Surah {surah.englishName} · {t("Vraag", "Question")} {currentQ + 1}
+            </p>
+            <h2 className="font-display text-2xl text-center mb-10" style={{ color: '#f5ecd7' }}>{q.question}</h2>
+            <div className="grid grid-cols-1 gap-3">
               {q.options.map((option, i) => {
-                let style = "border-gray-200 bg-white text-gray-800 hover:border-emerald-400"
+                let style: React.CSSProperties = { padding: '1rem 1.25rem', borderRadius: 8, color: '#f5ecd7', textAlign: 'left' as const }
                 if (selectedAnswer !== null) {
-                  if (i === q.correct) style = "border-emerald-500 bg-emerald-50 text-emerald-700"
-                  else if (i === selectedAnswer && selectedAnswer !== q.correct) style = "border-red-400 bg-red-50 text-red-700"
-                  else style = "border-gray-200 bg-white text-gray-400 opacity-50"
+                  if (i === q.correct) style = { ...style, borderColor: '#14a373', background: 'rgba(20,163,115,0.15)', color: '#14a373' }
+                  else if (i === selectedAnswer && selectedAnswer !== q.correct) style = { ...style, borderColor: '#e74c3c', background: 'rgba(231,76,60,0.1)', color: '#e74c3c' }
+                  else style = { ...style, opacity: 0.3 }
                 }
                 return (
                   <button key={i} onClick={() => handleQuizAnswer(i)} disabled={selectedAnswer !== null}
-                    className={`border-2 rounded-xl p-4 text-left transition-all font-medium ${style}`}>
+                    className="glass-card-sm transition" style={style}>
                     {option}
                   </button>
                 )
@@ -217,102 +236,120 @@ export default function QuranSurahPage() {
     )
   }
 
-  // ── READ / LISTEN ─────────────────────────────────────────
+  // READ / LISTEN
   return (
-    <main className="min-h-screen bg-gradient-to-br from-emerald-50 via-blue-50 to-purple-50">
+    <main className="luxe-bg">
       <audio ref={audioRef} />
-      <header className="bg-white shadow-sm sticky top-16 z-20">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-3">
-            <button onClick={() => { stopAudio(); router.push("/quran") }} className="flex items-center text-emerald-600 hover:text-emerald-700">
-              <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              Quran
-            </button>
-            <div className="text-center">
-              <h1 className="text-xl font-bold text-gray-900">{surah.englishName}</h1>
-              <p className="text-sm text-gray-400">{surah.name} · {surah.numberOfAyahs} {t("ayahs", "ayahs")}</p>
+
+      <div className="luxe-content max-w-4xl mx-auto px-6 lg:px-10 py-10">
+        <button onClick={() => { stopAudio(); router.push("/quran") }} className="eyebrow mb-6" style={{ color: 'rgba(212,175,55,0.6)' }}>
+          ← Quran
+        </button>
+
+        <div className="mb-10 reveal">
+          <div className="flex items-start justify-between gap-6 mb-6">
+            <div>
+              <p className="eyebrow mb-2">Surah</p>
+              <h1 className="font-display font-light mb-2" style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', color: '#f5ecd7' }}>
+                {surah.englishName}
+              </h1>
+              <p className="text-sm" style={{ color: 'rgba(245,236,215,0.5)' }}>
+                {surah.numberOfAyahs} {t("ayahs", "ayahs")}
+              </p>
             </div>
-            <button onClick={() => { stopAudio(); setPhase("quiz") }}
-              className="bg-gradient-to-r from-emerald-500 to-blue-500 text-white px-4 py-2 rounded-xl text-sm font-medium">
+            <div className="arabic-display text-right" dir="rtl" style={{ fontSize: '3.5rem' }}>
+              {surah.name}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => { stopAudio(); setPhase("read") }}
+              className={phase === "read" ? "btn-gold px-5 py-2 rounded text-sm" : "btn-ghost px-5 py-2 rounded text-sm"}>
+              📖 {t("Lezen", "Read")}
+            </button>
+            <button onClick={() => setPhase("listen")}
+              className={phase === "listen" ? "btn-gold px-5 py-2 rounded text-sm" : "btn-ghost px-5 py-2 rounded text-sm"}>
+              🎧 {t("Luisteren", "Listen")}
+            </button>
+            <button onClick={() => setShowTranslation(!showTranslation)}
+              className={showTranslation ? "btn-emerald px-5 py-2 rounded text-sm" : "btn-ghost px-5 py-2 rounded text-sm"}>
+              ✦ {t("Vertaling", "Translation")}
+            </button>
+            <button onClick={() => { stopAudio(); setPhase("quiz") }} className="btn-gold px-5 py-2 rounded text-sm ml-auto">
               🧠 Quiz
             </button>
           </div>
-          <div className="flex flex-wrap gap-2 justify-center">
-            <div className="flex rounded-lg overflow-hidden border border-gray-200">
-              <button onClick={() => { stopAudio(); setPhase("read") }}
-                className={`px-4 py-2 text-sm font-medium transition ${phase === "read" ? "bg-emerald-500 text-white" : "bg-white text-gray-600"}`}>
-                📖 {t("Lezen", "Read")}
-              </button>
-              <button onClick={() => setPhase("listen")}
-                className={`px-4 py-2 text-sm font-medium transition ${phase === "listen" ? "bg-emerald-500 text-white" : "bg-white text-gray-600"}`}>
-                🎧 {t("Luisteren", "Listen")}
-              </button>
-            </div>
-            <button onClick={() => setShowTranslation(!showTranslation)}
-              className={`px-4 py-2 text-sm font-medium rounded-lg border transition ${showTranslation ? "bg-blue-500 text-white border-blue-500" : "bg-white text-gray-600 border-gray-200"}`}>
-              🌐 {t("Vertaling", "Translation")}
-            </button>
-            {phase === "listen" && (
-              <select value={reciter} onChange={e => setReciter(e.target.value)} className="px-3 py-2 text-sm rounded-lg border border-gray-200 bg-white">
-                {RECITERS.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-              </select>
-            )}
-          </div>
-        </div>
-      </header>
 
-      {phase === "listen" && (
-        <div className="bg-emerald-600 text-white py-3">
-          <div className="max-w-4xl mx-auto px-4 flex items-center justify-between">
-            <span className="text-sm">{t("Ayah", "Ayah")} {currentAyah + 1} / {surah.ayahs.length}</span>
-            <div className="flex gap-3">
+          {phase === "listen" && (
+            <div className="mt-4">
+              <select value={reciter} onChange={e => setReciter(e.target.value)}
+                className="luxe-input px-4 py-2 rounded text-sm">
+                {RECITERS.map(r => <option key={r.id} value={r.id} style={{ background: '#14141c' }}>{r.name}</option>)}
+              </select>
+            </div>
+          )}
+        </div>
+
+        {phase === "listen" && (
+          <div className="glass-card rounded-lg p-4 mb-6 flex items-center justify-between sticky top-20 z-30" style={{ background: 'rgba(13,107,71,0.15)', borderColor: 'rgba(20,163,115,0.4)' }}>
+            <span className="eyebrow" style={{ color: '#14a373' }}>
+              {t("Ayah", "Ayah")} {currentAyah + 1} / {surah.ayahs.length}
+            </span>
+            <div className="flex gap-2">
               <button onClick={() => { if (currentAyah > 0) playAyah(currentAyah - 1) }} disabled={currentAyah === 0}
-                className="bg-emerald-700 hover:bg-emerald-800 px-4 py-2 rounded-lg text-sm disabled:opacity-40">
-                ← {t("Vorige", "Prev")}
-              </button>
+                className="btn-ghost px-4 py-2 rounded text-sm disabled:opacity-30">← {t("Vorige", "Prev")}</button>
               {isPlaying
-                ? <button onClick={stopAudio} className="bg-white text-emerald-700 px-4 py-2 rounded-lg text-sm font-medium">⏸ {t("Pauzeer", "Pause")}</button>
-                : <button onClick={() => playAyah(currentAyah)} className="bg-white text-emerald-700 px-4 py-2 rounded-lg text-sm font-medium">▶ {t("Speel", "Play")}</button>
+                ? <button onClick={stopAudio} className="btn-gold px-4 py-2 rounded text-sm">⏸ {t("Pauzeer", "Pause")}</button>
+                : <button onClick={() => playAyah(currentAyah)} className="btn-gold px-4 py-2 rounded text-sm">▶ {t("Speel", "Play")}</button>
               }
               <button onClick={() => { if (currentAyah + 1 < surah.ayahs.length) playAyah(currentAyah + 1) }} disabled={currentAyah + 1 >= surah.ayahs.length}
-                className="bg-emerald-700 hover:bg-emerald-800 px-4 py-2 rounded-lg text-sm disabled:opacity-40">
-                {t("Volgende", "Next")} →
-              </button>
+                className="btn-ghost px-4 py-2 rounded text-sm disabled:opacity-30">{t("Volgende", "Next")} →</button>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <div className="max-w-4xl mx-auto px-4 py-8 space-y-4">
-        {surah.ayahs.map((ayah, index) => {
-          const translation = translations[index]
-          const isCurrentListen = phase === "listen" && index === currentAyah
-          return (
-            <div key={ayah.numberInSurah} className={`bg-white rounded-2xl shadow p-6 transition-all ${isCurrentListen ? "ring-2 ring-emerald-400 shadow-lg" : ""}`}>
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-sm">{ayah.numberInSurah}</div>
-                {phase === "listen" && (
-                  <button onClick={() => playAyah(index)}
-                    className={`text-sm px-3 py-1 rounded-full transition ${isCurrentListen && isPlaying ? "bg-emerald-500 text-white" : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"}`}>
-                    {isCurrentListen && isPlaying ? "⏸" : "▶"}
-                  </button>
+        <div className="space-y-4">
+          {surah.ayahs.map((ayah, index) => {
+            const translation = translations[index]
+            const isCurrentListen = phase === "listen" && index === currentAyah
+            return (
+              <div key={ayah.numberInSurah}
+                className="glass-card rounded-lg p-6 transition-all"
+                style={isCurrentListen ? { borderColor: '#14a373', boxShadow: '0 0 40px rgba(20,163,115,0.25)' } : {}}>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center font-display text-sm" style={{ background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.3)', color: '#d4af37' }}>
+                    {ayah.numberInSurah}
+                  </div>
+                  {phase === "listen" && (
+                    <button onClick={() => playAyah(index)}
+                      className="btn-ghost text-xs px-3 py-1 rounded-full"
+                      style={isCurrentListen && isPlaying ? { background: '#d4af37', color: '#0a0a0f' } : {}}>
+                      {isCurrentListen && isPlaying ? "⏸" : "▶"}
+                    </button>
+                  )}
+                </div>
+                <p className="arabic-display text-right leading-loose mb-4" dir="rtl" style={{ fontSize: '2.5rem' }}>
+                  {ayah.text}
+                </p>
+                {showTranslation && translation?.translation && (
+                  <p className="text-sm leading-relaxed pt-4" style={{ color: 'rgba(245,236,215,0.7)', fontFamily: 'Cormorant Garamond', fontSize: '1.05rem', borderTop: '1px solid rgba(212,175,55,0.15)' }}>
+                    {translation.translation}
+                  </p>
                 )}
               </div>
-              <p className="text-3xl font-bold text-gray-800 text-right leading-loose mb-4" dir="rtl">{ayah.text}</p>
-              {showTranslation && translation?.translation && (
-                <p className="text-gray-600 text-sm leading-relaxed border-t border-gray-100 pt-3">{translation.translation}</p>
-              )}
-            </div>
-          )
-        })}
+            )
+          })}
 
-        <div onClick={() => { stopAudio(); setPhase("quiz") }}
-          className="bg-gradient-to-r from-emerald-500 to-blue-500 rounded-2xl p-8 text-center text-white cursor-pointer hover:from-emerald-600 hover:to-blue-600 transition shadow-xl">
-          <div className="text-4xl mb-3">🧠</div>
-          <h3 className="text-xl font-bold mb-2">{t("Begripstest", "Comprehension Quiz")}</h3>
-          <p className="text-emerald-100 text-sm">{t("Test je kennis over deze soera", "Test your knowledge of this surah")}</p>
+          <div onClick={() => { stopAudio(); setPhase("quiz") }}
+            className="glass-card tilt-card rounded-lg p-10 text-center cursor-pointer">
+            <div className="mb-4"><span className="arabic-display" style={{ fontSize: '3rem' }}>✦</span></div>
+            <h3 className="font-display text-2xl mb-2" style={{ color: '#f5ecd7' }}>
+              {t("Begripstest", "Comprehension Quiz")}
+            </h3>
+            <p className="text-sm" style={{ color: 'rgba(245,236,215,0.6)' }}>
+              {t("Test je kennis over deze soera", "Test your knowledge of this surah")}
+            </p>
+          </div>
         </div>
       </div>
     </main>
