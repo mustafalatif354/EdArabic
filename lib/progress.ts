@@ -6,7 +6,7 @@ export interface ProgressData {
   lesson_id: number
   completed: boolean
   score?: number
-  xp_earned?: number
+  xp?: number
   completed_at?: string
 }
 
@@ -27,7 +27,7 @@ export class ProgressManager {
         lesson_id: lessonId,
         completed,
         score,
-        xp_earned: xpEarned,
+        xp: xpEarned,
         ...(completed ? { completed_at: new Date().toISOString() } : {})
       }
 
@@ -106,7 +106,7 @@ export class ProgressManager {
 
       const { data, error } = await supabase
         .from('progress')
-        .select('xp_earned')
+        .select('xp')
         .eq('user_id', user.id)
 
       if (error) {
@@ -114,7 +114,7 @@ export class ProgressManager {
         return 0
       }
 
-      return (data || []).reduce((sum, row) => sum + (row.xp_earned || 0), 0)
+      return (data || []).reduce((sum, row) => sum + (row.xp || 0), 0)
     } catch (error) {
       console.error('Error in getTotalXP:', error)
       return 0

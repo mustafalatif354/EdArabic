@@ -115,7 +115,7 @@ export default function VocabularyExercisePage() {
         // Use lesson_id 100 for "vocabulary review" progress tracking
         await supabase.from("progress").upsert({
           user_id: user!.id, lesson_id: 100, completed: true,
-          score: finalScore, xp_earned: xp, completed_at: new Date().toISOString(),
+          score: finalScore, xp: xp, completed_at: new Date().toISOString(),
         }, { onConflict: "user_id,lesson_id" })
         setPhase("results")
         // Refresh stats for when user returns to ready phase
