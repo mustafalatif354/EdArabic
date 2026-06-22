@@ -117,16 +117,13 @@ const customStyles = `
     justify-content: center;
     background: radial-gradient(circle at 30% 30%, rgba(212,175,55,0.3), rgba(212,175,55,0.05));
     border: 1px solid rgba(212,175,55,0.3);
-    transform: rotate(45deg);
-    transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+    border-radius: 12px;
+    transition: border-radius 0.4s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.4s, background 0.4s;
   }
-  .card-icon-orb > * { transform: rotate(-45deg); }
   .section-card:hover .card-icon-orb {
-    transform: rotate(90deg) scale(1.1);
+    border-radius: 50px;
+    background: radial-gradient(circle at 30% 30%, rgba(212,175,55,0.45), rgba(212,175,55,0.1));
     box-shadow: 0 0 30px rgba(212,175,55,0.4);
-  }
-  .section-card:hover .card-icon-orb > * {
-    transform: rotate(-90deg);
   }
 
   .xp-bar {
