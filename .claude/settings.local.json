@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git init *)",
+      "Bash(git remote *)",
+      "Bash(git fetch *)",
+      "Bash(git checkout *)",
+      "Bash(git add *)",
+      "Bash(git reset *)",
+      "Bash(git merge *)",
+      "Bash(cp \"C:\\\\Users\\\\musta\\\\Desktop\\\\EdArabic-main\\\\EdArabic-main\\\\lib\\\\progress.ts\" \"C:\\\\Users\\\\musta\\\\Desktop\\\\EdArabic-git\\\\lib\\\\progress.ts\")",
+      "Bash(cp \"C:\\\\Users\\\\musta\\\\Desktop\\\\EdArabic-main\\\\EdArabic-main\\\\app\\\\vocabulary\\\\exercise\\\\page.tsx\" \"C:\\\\Users\\\\musta\\\\Desktop\\\\EdArabic-git\\\\app\\\\vocabulary\\\\exercise\\\\page.tsx\")"
+    ]
+  }
+}
